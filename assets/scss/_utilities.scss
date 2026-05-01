@@ -1,0 +1,9 @@
+// PACE UTILITY CLASSES
+// Shared between main.scss and editor-style.scss
+// ------------------------------------------------------------
+
+.pace-radius      { border-radius: var(--pace-radius); overflow: hidden; }
+.pace-gradient    { background: var(--pace-gradient); }
+.pace-shadow      { box-shadow: var(--pace-shadow); }
+.pace-no-shadow,
+.pace-no-shadow img { box-shadow: none !important; }

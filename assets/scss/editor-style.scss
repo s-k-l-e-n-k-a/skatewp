@@ -1,0 +1,13 @@
+@import 'utilities';
+
+body {
+  background: #FFF;
+}
+.block-editor-block-list__layout.is-root-container > :where(:not(.alignleft):not(.alignright):not(.alignfull)) {
+  max-width: none !important;
+}
+
+.block-editor-block-list__layout.is-root-container > :where(:not(.alignleft):not(.alignright):not(.alignfull)) {
+  max-width: none;
+  min-width: 100% !important;
+}

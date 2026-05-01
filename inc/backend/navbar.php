@@ -1,0 +1,2966 @@
+<?php
+
+/**
+ * Navigation — Skate
+ *
+ * Manages the site navbar via wp_options repeaters.
+ * Renders via [skate_navbar] shortcode.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+// ----------------------------------------
+// Allowed SVG tags for wp_kses
+// ----------------------------------------
+function skate_navbar_allowed_svg(): array {
+	static $tags;
+	if ( $tags ) return $tags;
+	$tags = [
+		'svg'      => [ 'xmlns' => true, 'viewbox' => true, 'fill' => true, 'stroke' => true, 'stroke-width' => true, 'stroke-linecap' => true, 'stroke-linejoin' => true, 'aria-hidden' => true, 'class' => true, 'width' => true, 'height' => true, 'id' => true ],
+		'path'     => [ 'd' => true, 'fill' => true, 'fill-rule' => true, 'clip-rule' => true, 'stroke' => true, 'stroke-width' => true, 'stroke-linecap' => true ],
+		'circle'   => [ 'cx' => true, 'cy' => true, 'r' => true, 'fill' => true, 'stroke' => true, 'stroke-width' => true ],
+		'rect'     => [ 'x' => true, 'y' => true, 'width' => true, 'height' => true, 'rx' => true, 'fill' => true ],
+		'line'     => [ 'x1' => true, 'y1' => true, 'x2' => true, 'y2' => true, 'stroke' => true, 'stroke-width' => true, 'stroke-linecap' => true ],
+		'polyline' => [ 'points' => true, 'fill' => true, 'stroke' => true, 'stroke-width' => true, 'stroke-linecap' => true, 'stroke-linejoin' => true ],
+		'polygon'  => [ 'points' => true, 'fill' => true ],
+		'g'        => [ 'id' => true, 'fill' => true, 'stroke' => true, 'clip-path' => true ],
+		'defs'     => [],
+		'clipPath' => [ 'id' => true ],
+	];
+	return $tags;
+}
+
+// ----------------------------------------
+// Helper: resolve URL from page_id or fallback url
+// ----------------------------------------
+function skate_resolve_url( int $page_id, string $url, string $anchor = '' ): string {
+	$anchor = ltrim( $anchor, '#' );
+	if ( $page_id ) {
+		$permalink = get_permalink( $page_id );
+		if ( $permalink ) return $anchor ? rtrim( $permalink, '/' ) . '/#' . $anchor : $permalink;
+	}
+	$base = $url ?: '#';
+	if ( $anchor && strpos( $base, '#' ) === false ) {
+		return rtrim( $base, '/' ) . '/#' . $anchor;
+	}
+	return $base;
+}
+
+
+// ----------------------------------------
+// Default hamburger SVG
+// ----------------------------------------
+define( 'SKATE_HBG_LINES_SVG', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 30" fill="none"><path d="M9 25H41V26.1H9V25Z" fill="currentColor"/><path d="M9 15H41V16.1H9V15Z" fill="currentColor"/><path d="M9 5H41V6.1H9V5Z" fill="currentColor"/></svg>' );
+
+define( 'SKATE_HBG_DEFAULT_SVG', '<svg width="52" height="50" viewBox="0 0 52 50" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_7547_23841)"><path d="M6.26367 49V37.72H8.07167L12.2157 47.048H11.7197L15.8637 37.72H17.6557V49H15.7837V40.632H16.3597L12.5677 49H11.3357L7.54367 40.632H8.13567V49H6.26367Z" fill="#17263A"/><path d="M23.9135 49.16C22.5589 49.16 21.4975 48.7867 20.7295 48.04C19.9615 47.2933 19.5775 46.2693 19.5775 44.968C19.5775 44.1253 19.7429 43.3893 20.0735 42.76C20.4042 42.1307 20.8629 41.64 21.4495 41.288C22.0469 40.936 22.7402 40.76 23.5295 40.76C24.3082 40.76 24.9589 40.9253 25.4815 41.256C26.0042 41.5867 26.3989 42.0507 26.6655 42.648C26.9429 43.2453 27.0815 43.944 27.0815 44.744V45.272H21.1935V44.216H25.6575L25.3855 44.44C25.3855 43.6933 25.2255 43.1227 24.9055 42.728C24.5962 42.3333 24.1429 42.136 23.5455 42.136C22.8842 42.136 22.3722 42.3707 22.0095 42.84C21.6575 43.3093 21.4815 43.9653 21.4815 44.808V45.016C21.4815 45.8907 21.6949 46.5467 22.1215 46.984C22.5589 47.4107 23.1722 47.624 23.9615 47.624C24.4202 47.624 24.8469 47.5653 25.2415 47.448C25.6469 47.32 26.0309 47.1173 26.3935 46.84L26.9855 48.184C26.6015 48.4933 26.1429 48.7333 25.6095 48.904C25.0762 49.0747 24.5109 49.16 23.9135 49.16Z" fill="#17263A"/><path d="M28.7752 49V42.936C28.7752 42.6053 28.7645 42.2693 28.7432 41.928C28.7218 41.5867 28.6898 41.2507 28.6472 40.92H30.5832L30.7432 42.52H30.5512C30.8072 41.9547 31.1858 41.5227 31.6872 41.224C32.1885 40.9147 32.7698 40.76 33.4312 40.76C34.3805 40.76 35.0952 41.0267 35.5752 41.56C36.0552 42.0933 36.2952 42.9253 36.2952 44.056V49H34.2952V44.152C34.2952 43.5013 34.1672 43.0373 33.9112 42.76C33.6658 42.472 33.2925 42.328 32.7912 42.328C32.1725 42.328 31.6818 42.52 31.3192 42.904C30.9565 43.288 30.7752 43.8 30.7752 44.44V49H28.7752Z" fill="#17263A"/><path d="M41.3278 49.16C40.3358 49.16 39.5945 48.888 39.1038 48.344C38.6131 47.8 38.3678 46.968 38.3678 45.848V40.92H40.3678V45.832C40.3678 46.4293 40.4905 46.872 40.7358 47.16C40.9811 47.4373 41.3545 47.576 41.8558 47.576C42.4211 47.576 42.8798 47.384 43.2318 47C43.5945 46.616 43.7758 46.1093 43.7758 45.48V40.92H45.7758V49H43.8238V47.352H44.0478C43.8131 47.928 43.4558 48.376 42.9758 48.696C42.5065 49.0053 41.9571 49.16 41.3278 49.16ZM42.6878 39.432V37.592H44.5278V39.432H42.6878ZM39.6638 39.432V37.592H41.5038V39.432H39.6638Z" fill="#17263A"/><path d="M8.99967 25H40.9997V26.1H8.99967V25Z" fill="#17263A"/><path d="M8.99967 15H40.9997V16.1H8.99967V15Z" fill="#17263A"/><path d="M8.99967 5H40.9997V6.1H8.99967V5Z" fill="#17263A"/></g><defs><clipPath id="clip0_7547_23841"><rect width="52" height="49" fill="white" transform="translate(0 0.199219)"/></clipPath></defs></svg>' );
+
+// ----------------------------------------
+// Preset default data
+// ----------------------------------------
+function skate_navbar_defaults(): array {
+	$kses = skate_navbar_allowed_svg();
+	return [
+		'links' => [
+			[
+				'label'    => 'Eigentümer',
+				'url'      => '/eigentuemer/',
+				'page_id'  => 0,
+				'icon_svg' => wp_kses( '<svg width="36" height="32" viewBox="0 0 36 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24.8117 28.0471C24.4735 28.0471 24.1968 27.7718 24.1968 27.4352V25.6301C24.1968 23.9719 22.844 22.6257 21.1776 22.6257H14.8257C13.1593 22.6257 11.8065 23.9719 11.8065 25.6301V27.4352C11.8065 27.7718 11.5298 28.0471 11.1916 28.0471C10.8534 28.0471 10.5767 27.7718 10.5767 27.4352V25.6301C10.5767 23.2988 12.4829 21.4019 14.8257 21.4019H21.1776C23.5204 21.4019 25.4266 23.2988 25.4266 25.6301V27.4352C25.4266 27.7718 25.1499 28.0471 24.8117 28.0471Z" fill="#17263A" /><path d="M18.0047 20.2454C15.662 20.2454 13.7558 18.3485 13.7558 16.0172C13.7558 13.6858 15.662 11.789 18.0047 11.789C20.3475 11.789 22.2537 13.6858 22.2537 16.0172C22.2537 18.3485 20.3475 20.2454 18.0047 20.2454ZM18.0047 13.0189C16.3384 13.0189 14.9856 14.3651 14.9856 16.0233C14.9856 17.6816 16.3384 19.0277 18.0047 19.0277C19.6711 19.0277 21.0239 17.6816 21.0239 16.0233C21.0239 14.3651 19.6711 13.0189 18.0047 13.0189Z" fill="#17263A" /><path d="M29.1099 31.9939H24.2829V30.7701H29.1037C30.0998 30.7701 30.9054 29.9685 30.9054 28.9772L30.8931 17.2838H33.6294C34.2627 17.1859 34.7546 16.6352 34.7546 15.9805V15.9193C34.7792 15.7174 34.7546 15.3992 34.2996 15.0014L30.9115 12.0215V4.46452C30.9115 3.74248 30.3212 3.15506 29.5956 3.15506H27.6587C26.9331 3.15506 26.3428 3.74248 26.3428 4.46452V8.02578L18.9025 1.49681C18.6811 1.32548 18.3737 1.23369 18.0539 1.22757C17.685 1.19698 17.3714 1.31936 17.1439 1.53964L1.62378 14.9831C1.37782 15.2217 1.22409 15.5827 1.23024 15.956C1.21179 16.6903 1.78365 17.2838 2.49694 17.3022H5.08567V28.9833C5.08567 29.4606 5.27014 29.9134 5.60834 30.25C5.94653 30.5865 6.40156 30.7762 6.88118 30.7762H11.7266V32H6.88118C6.06951 32 5.30704 31.6879 4.73518 31.1127C4.16332 30.5437 3.84972 29.7849 3.84972 28.9833V18.526H2.49079C1.7898 18.5076 1.1626 18.2323 0.695278 17.7489C0.234102 17.2593 -0.0118582 16.623 0.000439798 15.9499C-0.0118582 15.2645 0.277145 14.5731 0.793662 14.0775L16.3076 0.64015C16.7688 0.199582 17.4267 -0.0329395 18.0847 0.00377446C18.6258 0.00377446 19.2161 0.187344 19.6896 0.554484L25.1253 5.31506V4.4584C25.1253 3.06327 26.269 1.93126 27.671 1.93126H29.6079C31.0099 1.93126 32.1475 3.06939 32.1475 4.46452V11.4708L35.1174 14.0836C35.9168 14.7811 36.0398 15.5154 35.9906 16.0233C35.966 17.4001 34.8346 18.5199 33.4449 18.526H32.8239V18.5076H32.1229L32.1352 28.9772C32.1352 30.6416 30.7701 31.9939 29.1037 31.9939H29.1099Z" fill="#17263A" /></svg>', $kses ),
+				'columns'  => [],
+			],
+			[
+				'label'    => 'Suchende',
+				'url'      => '/suchende/',
+				'page_id'  => 0,
+				'icon_svg' => wp_kses( '<svg width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.541 0C29.4328 0 36.6416 7.20783 36.6416 16.0996C36.6416 24.9914 29.4328 32.1992 20.541 32.1992C16.9491 32.1991 13.6323 31.0226 10.9541 29.0342L3.96582 36.0234C3.43952 36.5498 2.88116 36.9322 2.23145 36.9102C1.59548 36.8885 1.07617 36.4824 0.617188 36.0234C0.0791017 35.4852 -0.0644386 34.8743 0.0244141 34.3281C0.107249 33.8193 0.382654 33.4104 0.617188 33.1758L7.82227 25.9697C5.70381 23.2437 4.44141 19.8193 4.44141 16.0996C4.44141 7.20796 11.6494 0.000216503 20.541 0ZM1.46582 34.0234C1.36716 34.1221 1.24288 34.3131 1.20898 34.5205C1.18126 34.6909 1.20409 34.914 1.46582 35.1758C1.90133 35.6112 2.13224 35.7062 2.27246 35.7109C2.39909 35.7151 2.64398 35.649 3.11719 35.1758L10.0127 28.2793C9.51241 27.8464 9.03925 27.3832 8.5957 26.8926L1.46582 34.0234ZM20.541 1.19922C12.3122 1.19944 5.6416 7.8707 5.6416 16.0996C5.6416 19.7745 6.97231 23.1382 9.17773 25.7363L9.46582 26.0234L9.44531 26.043C12.1732 29.0851 16.1334 30.9999 20.541 31C28.7701 31 35.4414 24.3287 35.4414 16.0996C35.4414 7.87057 28.7701 1.19922 20.541 1.19922ZM27.5078 16.1172C27.8392 16.1172 28.1084 16.3864 28.1084 16.7178V23.5996C28.1084 23.931 27.8392 24.1992 27.5078 24.1992H22.4414C22.1101 24.1992 21.8418 23.931 21.8418 23.5996V18.5947C21.8418 18.4244 21.7727 18.2594 21.6484 18.1367C21.524 18.0138 21.3539 17.9434 21.1748 17.9434H19.9082C19.7291 17.9434 19.5581 18.0138 19.4336 18.1367C19.3096 18.2594 19.2412 18.4246 19.2412 18.5947V23.5996C19.2412 23.9309 18.9729 24.1991 18.6416 24.1992H13.5752C13.2438 24.1992 12.9746 23.931 12.9746 23.5996V16.7178C12.9746 16.3864 13.2438 16.1172 13.5752 16.1172C13.9063 16.1174 14.1748 16.3866 14.1748 16.7178V23H18.041V18.5947C18.041 18.1014 18.2401 17.6298 18.5908 17.2832C18.9414 16.9368 19.4155 16.7432 19.9082 16.7432H21.1748C21.6675 16.7432 22.1416 16.9369 22.4922 17.2832C22.8429 17.6298 23.041 18.1015 23.041 18.5947V23H26.9082V16.7178C26.9082 16.3865 27.1766 16.1173 27.5078 16.1172ZM20.541 6C20.7852 6 21.0279 6.04713 21.2539 6.13965C21.4795 6.23205 21.6849 6.36777 21.8584 6.53906H21.8594L30.4629 15.0391C30.6986 15.2719 30.7007 15.652 30.4678 15.8877C30.2349 16.1232 29.8558 16.1254 29.6201 15.8926L21.0156 7.39355C20.954 7.33269 20.8803 7.28334 20.7988 7.25C20.7174 7.21672 20.6295 7.19922 20.541 7.19922C20.4527 7.19927 20.3654 7.21682 20.2842 7.25C20.2028 7.28334 20.129 7.33268 20.0674 7.39355L11.4629 15.8926C11.2271 16.1254 10.8471 16.1234 10.6143 15.8877C10.3816 15.6519 10.3845 15.2719 10.6201 15.0391L19.2236 6.53906C19.3972 6.36754 19.6032 6.23212 19.8291 6.13965C20.055 6.04718 20.2969 6.00005 20.541 6Z" fill="#17263A" /></svg>', $kses ),
+				'columns'  => [],
+			],
+			[
+				'label'    => 'Immobilien',
+				'url'      => '/suchende/immobilien/berlin/',
+				'page_id'  => 0,
+				'icon_svg' => wp_kses( '<svg id="Ebene_2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34.64 38.33"><g id="Ebene_1-2"><path d="M3.32,38.33l-3.32-7.5.34-.23s2.89-1.98,4.76-4.01c3.03-3.29,6.64-3.2,6.79-3.2h8.07c1.06.05,2.83.56,2.86,2.18.01.59-.18,1.1-.55,1.48-.44.45-1.13.7-1.93.71-2.4.01-5.1.01-5.1.01-.93,0-1.15.23-1.18.28.46,1.05,2.9.84,7.5.08,1.86-.31,2.46-.9,3.44-1.88,1.42-1.73,6.25-7.54,7.65-7.89.71-.18,1.4.07,1.75.65.33.54.6,1.76-1.25,3.88-.1.11-.7.96-1.33,1.86-2.35,3.34-4.71,6.65-5.46,7.29-1.37,1.17-10.95,1.81-15.49,1.81-2.05,0-5.78,2.93-7.04,4.05l-.51.46ZM1.25,31.18l2.43,5.5c1.32-1.11,4.86-3.86,7.19-3.86,5.96,0,14.01-.85,14.84-1.57.72-.61,3.7-4.84,5.3-7.11.86-1.21,1.27-1.8,1.39-1.94,1.22-1.39,1.38-2.32,1.15-2.7-.14-.23-.43-.25-.65-.2-.74.19-4.22,4-7.15,7.58-1.08,1.08-1.83,1.83-4.01,2.2-5.41.9-7.81,1.02-8.62-.61-.11-.3-.11-.7.14-1.04.34-.47.99-.69,1.99-.69,0,0,2.7,0,5.09-.01.53,0,.97-.15,1.22-.4.18-.19.27-.44.26-.76-.02-1.09-1.87-1.2-1.88-1.2h-8.07c-.05,0-3.34-.06-6.04,2.87-1.58,1.72-3.76,3.33-4.59,3.92Z" /><path d="M9.62,22.77c-.17-.17-.26-.39-.26-.63v-7.25c0-.14.03-.27.09-.39.05-.12.14-.22.25-.31l9.05-7.13c.32-.25.79-.25,1.11,0l9.04,7.13c.11.09.19.19.25.31.06.13.09.25.09.38v5.29h-1v-5.28l-8.94-6.99-8.98,7.08.04,7.17-.74.63Z" /><path d="M30.67,12.46c-.35,0-.67-.11-.95-.31l-10.22-8.11-10.21,8.09c-.58.43-1.38.41-1.92.01l-.72-.57c-.13-.09-.25-.23-.33-.39-.08-.16-.13-.34-.13-.52s.04-.36.13-.52c.08-.16.21-.3.35-.41L18.52.32c.6-.43,1.37-.42,1.93-.01l3.25,2.58v-.68c0-.74.38-1.28.91-1.28h1.43c.53,0,.91.54.91,1.28v3.26l5.37,4.27c.14.1.26.24.34.39.08.16.13.33.13.51,0,.18-.04.36-.11.52-.08.16-.19.3-.33.41l-.71.56c-.29.21-.62.32-.97.32ZM19.5,2.77l10.83,8.59c.18.13.5.14.71-.01l.69-.55.56-.14h-.5s0,0,0,0l-.07-.13-5.76-4.57v-3.74c0-.13-.02-.22-.04-.28h-1.16c-.02.06-.04.15-.04.28v2.75l-4.86-3.86c-.18-.13-.51-.14-.72.01L7.26,10.53l-.08.13h0s.07.13.07.13l.71.56c.18.13.5.14.71-.01L19.5,2.77Z" /><path d="M21.82,20.67h-5.38v-5.38h5.38v5.38ZM17.44,19.67h3.38v-3.38h-3.38v3.38Z" /></g></svg>', $kses ),
+				'columns'  => [],
+			],
+		],
+		'buttons' => [
+			[ 'label' => 'Verkaufen', 'url' => '/eigentuemer/verkaufen/', 'page_id' => 0, 'style' => 'filled-dark' ],
+			[ 'label' => 'Bewertung', 'url' => '/eigentuemer/verkaufen/immobilienbewertung/', 'page_id' => 0, 'style' => 'filled' ],
+		],
+		'icons' => [
+			[
+				'svg'     => wp_kses( '<svg id="Ebene_2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 99.52 93.04"><g id="Ebene_4"><path d="M18.25,92.74v-17.81h-6.93v-3.15h17.69v3.15h-6.93v17.81h-3.83Z" /><path d="M36.35,93.04c-2.52,0-4.49-.69-5.92-2.08-1.43-1.39-2.14-3.29-2.14-5.71,0-1.57.31-2.93.92-4.1s1.47-2.08,2.57-2.73c1.1-.65,2.38-.98,3.85-.98s2.66.31,3.63.92c.97.61,1.71,1.48,2.21,2.59.51,1.11.76,2.41.76,3.89v.98h-10.94v-1.96h8.29l-.5.42c0-1.39-.29-2.45-.88-3.18-.58-.73-1.43-1.1-2.54-1.1-1.23,0-2.18.44-2.84,1.31-.67.87-1,2.09-1,3.66v.39c0,1.62.4,2.84,1.2,3.64s1.94,1.2,3.4,1.2c.85,0,1.65-.11,2.39-.34.74-.23,1.45-.6,2.13-1.11l1.1,2.5c-.71.58-1.57,1.02-2.56,1.34-.99.32-2.04.48-3.15.48Z" /><path d="M51.19,93.04c-1.31,0-2.46-.31-3.45-.94s-1.76-1.52-2.32-2.69c-.56-1.17-.83-2.57-.83-4.19s.28-3.02.83-4.18c.55-1.16,1.33-2.05,2.32-2.68.99-.62,2.14-.94,3.45-.94s2.38.31,3.34.94c.96.62,1.6,1.46,1.92,2.51h-.33l.33-3.15h3.57c-.06.61-.11,1.24-.16,1.87s-.07,1.26-.07,1.87v11.27h-3.69l-.03-3.09h.36c-.32,1.03-.96,1.85-1.93,2.47-.97.61-2.07.92-3.3.92ZM52.23,90.19c1.17,0,2.11-.41,2.82-1.23.71-.82,1.07-2.07,1.07-3.73s-.36-2.9-1.07-3.72c-.71-.81-1.66-1.22-2.82-1.22s-2.11.41-2.82,1.22c-.71.81-1.07,2.05-1.07,3.72s.35,2.91,1.06,3.73c.7.82,1.65,1.23,2.84,1.23Z" /><path d="M63.82,92.74v-11.27c0-.61-.02-1.24-.06-1.87s-.1-1.26-.18-1.87h3.6l.3,2.97h-.36c.42-1.03,1.06-1.83,1.92-2.41.86-.57,1.89-.86,3.08-.86s2.17.28,2.96.85c.78.56,1.33,1.44,1.65,2.63h-.48c.42-1.07,1.1-1.92,2.05-2.54.95-.62,2.04-.94,3.27-.94,1.68,0,2.94.5,3.78,1.49.83.99,1.25,2.54,1.25,4.64v9.19h-3.72v-9.04c0-1.19-.2-2.05-.59-2.57s-1.03-.79-1.9-.79c-1.03,0-1.84.36-2.44,1.08-.59.72-.89,1.7-.89,2.93v8.38h-3.72v-9.04c0-1.19-.2-2.05-.59-2.57s-1.03-.79-1.9-.79c-1.03,0-1.84.36-2.42,1.08-.58.72-.88,1.7-.88,2.93v8.38h-3.72Z" /></g><g id="Ebene_2-2"><path d="M49.01,25.58c-7.05,0-12.79-5.74-12.79-12.79S41.96,0,49.01,0s12.79,5.74,12.79,12.79-5.74,12.79-12.79,12.79ZM49.01,2c-5.95,0-10.79,4.84-10.79,10.79s4.84,10.79,10.79,10.79,10.79-4.84,10.79-10.79-4.84-10.79-10.79-10.79Z" /><path d="M19.89,27.42c-5.86,0-10.63-4.77-10.63-10.63s4.77-10.63,10.63-10.63,10.63,4.77,10.63,10.63-4.77,10.63-10.63,10.63ZM19.89,8.16c-4.76,0-8.63,3.87-8.63,8.63s3.87,8.63,8.63,8.63,8.63-3.87,8.63-8.63-3.87-8.63-8.63-8.63Z" /><path d="M77.85,27.42c-5.86,0-10.63-4.77-10.63-10.63s4.77-10.63,10.63-10.63,10.63,4.77,10.63,10.63-4.77,10.63-10.63,10.63ZM77.85,8.16c-4.76,0-8.63,3.87-8.63,8.63s3.87,8.63,8.63,8.63,8.63-3.87,8.63-8.63-3.87-8.63-8.63-8.63Z" /><path d="M2,50.4H0c0-3.71,0-7.55,1.91-12.33.41-1.03,2.12-4.56,6.92-6.96,6.58-3.29,21.86-2.11,25.07,1.11l-1.41,1.41c-2.4-2.4-16.77-3.73-22.77-.73-4.17,2.08-5.61,5.06-5.96,5.92-1.77,4.42-1.77,7.9-1.77,11.59Z" /><path d="M26.68,55.99c-.03-.4-.65-9.96.94-16.85,2.92-12.63,21.41-11.86,22.18-11.81l-.1,2c-.17,0-17.6-.73-20.14,10.27-1.52,6.6-.9,16.17-.9,16.27l-2,.13Z" /><path d="M99.52,50.4h-2c0-3.69,0-7.17-1.77-11.59-.34-.86-1.79-3.83-5.96-5.92-6-3-20.36-1.67-22.77.73l-1.41-1.41c3.21-3.21,18.49-4.4,25.07-1.11,4.8,2.4,6.51,5.94,6.92,6.96,1.91,4.78,1.91,8.62,1.91,12.33Z" /><path d="M72.84,55.99l-2-.13c0-.1.63-9.67-.9-16.27-2.54-11-19.97-10.28-20.14-10.27l-.1-2c.78-.04,19.27-.82,22.18,11.81,1.59,6.89.97,16.45.94,16.85Z" /></g></svg>', $kses ),
+				'url'     => '/unternehmen/team/',
+				'page_id' => 0,
+				'label'   => 'Team',
+				'type'    => 'link',
+			],
+		],
+	];
+}
+
+function skate_navbar_seed( bool $force = false ): void {
+	if ( ! $force && get_option( 'skate_navbar_links' ) ) return;
+	$d = skate_navbar_defaults();
+
+	// Try to resolve URL slugs to page IDs so the picker shows the linked page name.
+	$resolve = function ( array &$items ): void {
+		foreach ( $items as &$item ) {
+			if ( ! empty( $item['page_id'] ) || empty( $item['url'] ) ) continue;
+			$path = trim( (string) parse_url( $item['url'], PHP_URL_PATH ), '/' );
+			$page = get_page_by_path( $path );
+			if ( $page ) {
+				$item['page_id']    = $page->ID;
+				$item['url']        = '';
+				unset( $item['unresolved'] );
+			} else {
+				$item['unresolved'] = true;
+			}
+		}
+	};
+	$resolve( $d['links'] );
+	$resolve( $d['buttons'] );
+	$resolve( $d['icons'] );
+
+	update_option( 'skate_navbar_links',   wp_json_encode( $d['links'] ) );
+	update_option( 'skate_navbar_buttons', wp_json_encode( $d['buttons'] ) );
+	update_option( 'skate_navbar_icons',   wp_json_encode( $d['icons'] ) );
+}
+add_action( 'after_switch_theme', 'skate_navbar_seed' );
+
+// ----------------------------------------
+// Shortcode: [skate_navbar]
+// ----------------------------------------
+add_shortcode( 'skate_navbar', 'skate_render_navbar' );
+
+function skate_render_navbar(): string {
+	$variant           = get_option( 'skate_navbar_variant', 'standard' );
+	$logo_size         = (int) get_option( 'skate_navbar_logo_size', 118 );
+	$logo_size_mobile  = (int) get_option( 'skate_navbar_logo_size_mobile', 80 );
+	$logo_light_url    = get_option( 'skate_navbar_logo_light', '' );
+	$links                      = json_decode( get_option( 'skate_navbar_links',   '[]' ), true ) ?: [];
+	$buttons                    = json_decode( get_option( 'skate_navbar_buttons', '[]' ), true ) ?: [];
+	$icons                      = json_decode( get_option( 'skate_navbar_icons',   '[]' ), true ) ?: [];
+	$submenu_icon_mode          = get_option( 'skate_navbar_submenu_icon_mode', 'arrow' );
+	$submenu_icon_default_svg   = get_option( 'skate_navbar_submenu_icon_default_svg', '' );
+	$col_bg_preset              = get_option( 'skate_navbar_col_bg_preset', 'none' );
+	$hbg_enabled        = (bool) get_option( 'skate_navbar_hamburger_enabled', '1' );
+	$hbg_svg            = $hbg_enabled ? ( get_option( 'skate_navbar_hamburger_svg', '' ) ?: SKATE_HBG_DEFAULT_SVG ) : '';
+	$hbg_columns        = $hbg_enabled ? ( json_decode( get_option( 'skate_navbar_hamburger_columns', '[]' ), true ) ?: [] ) : [];
+	$hbg_mobile_title   = get_option( 'skate_navbar_hamburger_mobile_title', 'Übersicht Menu' );
+	$hbg_mobile_label   = get_option( 'skate_navbar_hamburger_mobile_label', 'Menü' );
+	$submenu_close      = (bool) get_option( 'skate_navbar_submenu_close', '0' );
+
+	// Logo from WP site_logo option
+	$logo_id  = (int) get_option( 'site_logo', 0 );
+	$logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+	$logo_alt = $logo_id ? (string) get_post_meta( $logo_id, '_wp_attachment_image_alt', true ) : get_bloginfo( 'name' );
+
+	// Column background tints
+	$col_bg_css = '';
+	if ( $col_bg_preset !== 'none' ) {
+		$palette  = wp_get_global_settings( [ 'color', 'palette', 'theme' ] );
+		$base_hex = match( $col_bg_preset ) {
+			'grey'      => 'b0b8c4',
+			'primary'   => '17263a',
+			'secondary' => 'd6b36d',
+			default     => 'b0b8c4',
+		};
+		$target_slug = match( $col_bg_preset ) {
+			'primary'   => 'main-color',
+			'secondary' => 'secondary-color',
+			default     => null,
+		};
+		if ( $target_slug ) {
+			foreach ( (array) $palette as $item ) {
+				if ( ( $item['slug'] ?? '' ) === $target_slug ) {
+					$base_hex = ltrim( $item['color'], '#' );
+					break;
+				}
+			}
+		}
+		$r = hexdec( substr( $base_hex, 0, 2 ) );
+		$g = hexdec( substr( $base_hex, 2, 2 ) );
+		$b = hexdec( substr( $base_hex, 4, 2 ) );
+		$levels    = [ 0.10, 0.07, 0.05, 0.03, 0.02 ];
+		$col_bg_css = '<style>';
+		foreach ( $levels as $i => $alpha ) {
+			$n = $i + 1;
+			$col_bg_css .= ".skate-navbar__submenu-col:nth-child({$n}){background:rgba({$r},{$g},{$b},{$alpha});}";
+		}
+		$col_bg_css .= '</style>';
+	}
+
+	ob_start();
+	echo $col_bg_css; // phpcs:ignore WordPress.Security.EscapeOutput
+	?>
+	<header class="skate-navbar skate-navbar--<?= esc_attr( $variant ) ?>" id="skate-navbar">
+		<div class="skate-navbar__overlay" aria-hidden="true"></div>
+		<div class="skate-navbar__inner">
+
+		<!-- Logo -->
+		<div class="skate-navbar__logo">
+			<a href="<?= esc_url( home_url( '/' ) ) ?>" aria-label="<?= esc_attr( get_bloginfo( 'name' ) ) ?>">
+				<?php if ( $logo_url ) : ?>
+					<img src="<?= esc_url( $logo_url ) ?>"
+					     alt="<?= esc_attr( $logo_alt ) ?>"
+					     class="skate-navbar__logo-img"
+					     style="width:<?= $logo_size ?>px;--skate-logo-mobile-w:<?= $logo_size_mobile ?>px">
+					<?php if ( $logo_light_url ) : ?>
+						<img src="<?= esc_url( $logo_light_url ) ?>"
+						     alt="<?= esc_attr( $logo_alt ) ?>"
+						     class="skate-navbar__logo-img skate-navbar__logo-light"
+						     style="width:<?= $logo_size ?>px;--skate-logo-mobile-w:<?= $logo_size_mobile ?>px">
+					<?php endif; ?>
+				<?php else : ?>
+					<span class="skate-navbar__logo-text"><?= esc_html( get_bloginfo( 'name' ) ) ?></span>
+				<?php endif; ?>
+			</a>
+		</div>
+
+		<?php if ( $links ) : ?>
+		<!-- Links -->
+		<div class="skate-navbar__links skate-navbar__desktop-item">
+			<?php foreach ( $links as $link ) :
+				// Normalize: migrate old separate 'featured' key into unified columns array
+				$cols = $link['columns'] ?? [];
+				if ( ! empty( $link['featured']['post_id'] ) ) {
+					$has_feat_col = ! empty( array_filter( $cols, fn( $c ) => ( $c['type'] ?? 'regular' ) === 'featured' ) );
+					if ( ! $has_feat_col ) $cols[] = [ 'type' => 'featured', 'post_id' => (int) $link['featured']['post_id'] ];
+				}
+				$has_sub  = ! empty( $cols );
+				$icon_svg = $link['icon_svg'] ?? '';
+			?>
+			<div class="skate-navbar__link-item<?= $has_sub ? ' skate-navbar__link-item--has-sub' : '' ?>"<?= $has_sub ? ' data-submenu' : '' ?>>
+				<?php $link_url = skate_resolve_url( (int) ( $link['page_id'] ?? 0 ), $link['url'] ?? '' ); ?>
+				<a href="<?= esc_url( $link_url ) ?>" class="skate-navbar__link"<?= $has_sub ? ' aria-haspopup="true" aria-expanded="false"' : '' ?>>
+					<?php if ( $icon_svg ) : ?>
+					<span class="skate-navbar__link-icon" aria-hidden="true"><?= $icon_svg ?></span>
+					<?php endif; ?>
+					<span class="skate-navbar__link-text"><?= esc_html( $link['label'] ?? '' ) ?></span>
+				</a>
+				<?php if ( $has_sub ) : ?>
+				<div class="skate-navbar__submenu" role="region" aria-label="<?= esc_attr( $link['label'] ?? '' ) ?> menu">
+					<?php if ( $submenu_close ) : ?>
+					<button class="skate-navbar__submenu-close" aria-label="Close">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+					</button>
+					<?php endif; ?>
+					<div class="skate-navbar__submenu-inner">
+						<?php foreach ( $cols as $col ) :
+							if ( ( $col['type'] ?? 'regular' ) === 'featured' ) :
+								$feat_post = get_post( (int) ( $col['post_id'] ?? 0 ) );
+								if ( $feat_post && $feat_post->post_status === 'publish' && $feat_post->post_type === 'wp_block' ) :
+									$feat_bg     = $col['bg_color'] ?? '';
+									$feat_bg_css = $feat_bg ? esc_attr( $feat_bg ) : 'var(--wp--preset--color--light-gray,#F2F4F6)';
+								?>
+						<div class="skate-navbar__submenu-col skate-navbar__submenu-col--featured" style="background-color:<?= $feat_bg_css ?>">
+							<?= do_shortcode( do_blocks( $feat_post->post_content ) ) // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						</div>
+								<?php endif; ?>
+							<?php else : ?>
+						<div class="skate-navbar__submenu-col">
+							<?php foreach ( ( $col['groups'] ?? [] ) as $grp ) : ?>
+							<?php if ( $grp['title'] ?? '' ) : ?>
+							<div class="skate-navbar__submenu-col-head"><?= esc_html( $grp['title'] ) ?></div>
+							<?php endif; ?>
+							<ul class="skate-navbar__submenu-col-links skate-navbar__submenu-col-links--<?= esc_attr( $submenu_icon_mode ) ?>">
+								<?php foreach ( ( $grp['links'] ?? [] ) as $cl ) :
+									$cl_url  = skate_resolve_url( (int) ( $cl['page_id'] ?? 0 ), $cl['url'] ?? '', $cl['anchor'] ?? '' );
+									$cl_icon = '';
+									if ( $submenu_icon_mode === 'default' ) {
+										$cl_icon = $submenu_icon_default_svg;
+									} elseif ( $submenu_icon_mode === 'custom' ) {
+										$cl_icon = $cl['icon_svg'] ?? '';
+									}
+								?>
+								<li><a href="<?= esc_url( $cl_url ) ?>"><?php if ( $cl_icon ) : ?><span class="skate-navbar__submenu-link-icon" aria-hidden="true"><?= $cl_icon // phpcs:ignore WordPress.Security.EscapeOutput ?></span><?php endif; ?><?= esc_html( $cl['title'] ?? '' ) ?></a></li>
+								<?php endforeach; ?>
+							</ul>
+							<?php endforeach; ?>
+						</div>
+							<?php endif; ?>
+						<?php endforeach; ?>
+					</div>
+				</div>
+				<?php endif; ?>
+			</div>
+			<?php endforeach; ?>
+		</div>
+		<?php endif; ?>
+
+		<?php if ( $buttons || $icons || $hbg_svg ) : ?>
+		<!-- Right group (buttons + icons + hamburger) -->
+		<div class="skate-navbar__right">
+			<?php if ( $buttons ) : ?>
+			<div class="skate-navbar__buttons skate-navbar__desktop-item">
+				<?php foreach ( $buttons as $btn ) : ?>
+				<?php $btn_url = skate_resolve_url( (int) ( $btn['page_id'] ?? 0 ), $btn['url'] ?? '' ); ?>
+				<a href="<?= esc_url( $btn_url ) ?>" class="skate-navbar__btn skate-navbar__btn--<?= esc_attr( $btn['style'] ?? 'filled' ) ?>"><?= esc_html( $btn['label'] ?? '' ) ?></a>
+				<?php endforeach; ?>
+			</div>
+			<?php endif; ?>
+
+			<?php if ( $icons ) : ?>
+			<div class="skate-navbar__icons">
+				<?php foreach ( $icons as $icon ) :
+					$icon_url          = skate_resolve_url( (int) ( $icon['page_id'] ?? 0 ), $icon['url'] ?? '' );
+					$icon_mobile_title = $icon['mobile_title'] ?? '';
+				$icon_aria_label   = $icon_mobile_title ?: ( $icon['page_id'] ? get_the_title( (int) $icon['page_id'] ) : parse_url( $icon_url, PHP_URL_PATH ) );
+				?>
+				<a href="<?= esc_url( $icon_url ) ?>" class="skate-navbar__icon" aria-label="<?= esc_attr( $icon_aria_label ) ?>"><span class="skate-navbar__icon-svg" aria-hidden="true"><?= $icon['svg'] ?? '' ?></span><?php if ( $icon_mobile_title ) : ?><span class="skate-navbar__icon-label" aria-hidden="true"><?= esc_html( $icon_mobile_title ) ?></span><?php endif; ?></a>
+				<?php endforeach; ?>
+			</div>
+			<?php endif; ?>
+
+			<?php if ( $hbg_svg ) : ?>
+			<div class="skate-navbar__link-item skate-navbar__link-item--has-sub skate-navbar__hbg-item skate-navbar__desktop-item" data-submenu>
+				<button class="skate-navbar__hbg-btn skate-navbar__icon" aria-expanded="false" aria-label="<?= esc_attr( $hbg_mobile_label ?: 'Menu' ) ?>"><span class="skate-navbar__icon-svg" aria-hidden="true"><?= $hbg_svg ?></span><?php if ( $hbg_mobile_label ) : ?><span class="skate-navbar__icon-label" aria-hidden="true"><?= esc_html( $hbg_mobile_label ) ?></span><?php endif; ?></button>
+				<?php if ( $hbg_columns ) : ?>
+				<div class="skate-navbar__submenu" role="region" aria-label="Menu">
+					<?php if ( $submenu_close ) : ?>
+					<button class="skate-navbar__submenu-close" aria-label="Close">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+					</button>
+					<?php endif; ?>
+					<div class="skate-navbar__submenu-inner">
+						<?php foreach ( $hbg_columns as $col ) :
+							if ( ( $col['type'] ?? 'regular' ) === 'featured' ) :
+								$feat_post = get_post( (int) ( $col['post_id'] ?? 0 ) );
+								if ( $feat_post && $feat_post->post_status === 'publish' && $feat_post->post_type === 'wp_block' ) :
+									$bg = $col['bg_color'] ?? '';
+									remove_filter( 'the_content', 'wpautop' );
+									$feat_html = do_shortcode( do_blocks( $feat_post->post_content ) );
+									add_filter( 'the_content', 'wpautop' );
+						?>
+						<div class="skate-navbar__submenu-col skate-navbar__submenu-col--featured"<?= $bg ? ' style="background:' . esc_attr( $bg ) . '"' : '' ?>>
+							<?= $feat_html // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						</div>
+								<?php endif; ?>
+							<?php else : ?>
+						<div class="skate-navbar__submenu-col">
+							<?php foreach ( ( $col['groups'] ?? [] ) as $grp ) : ?>
+								<?php if ( ! empty( $grp['title'] ) ) : ?>
+							<div class="skate-navbar__submenu-col-head"><?= esc_html( $grp['title'] ) ?></div>
+								<?php endif; ?>
+							<ul class="skate-navbar__submenu-col-links skate-navbar__submenu-col-links--<?= esc_attr( $submenu_icon_mode ) ?>">
+								<?php foreach ( ( $grp['links'] ?? [] ) as $cl ) :
+									$cl_url  = skate_resolve_url( (int) ( $cl['page_id'] ?? 0 ), $cl['url'] ?? '', $cl['anchor'] ?? '' );
+									$cl_icon = '';
+									if ( $submenu_icon_mode === 'default' ) {
+										$cl_icon = $submenu_icon_default_svg;
+									} elseif ( $submenu_icon_mode === 'custom' ) {
+										$cl_icon = $cl['icon_svg'] ?? '';
+									}
+								?>
+								<li><a href="<?= esc_url( $cl_url ) ?>">
+									<?php if ( $cl_icon ) : ?>
+									<span class="skate-navbar__submenu-link-icon" aria-hidden="true"><?= $cl_icon // phpcs:ignore ?></span>
+									<?php endif; ?>
+									<?= esc_html( $cl['title'] ) ?>
+								</a></li>
+								<?php endforeach; ?>
+							</ul>
+							<?php endforeach; ?>
+						</div>
+							<?php endif; ?>
+						<?php endforeach; ?>
+					</div>
+				</div>
+				<?php endif; ?>
+			</div>
+			<?php endif; ?>
+			<!-- Mobile hamburger trigger -->
+			<button class="skate-navbar__hamburger" aria-expanded="false" aria-controls="skate-mobile-menu" aria-label="Open menu"><span class="skate-navbar__icon-svg" aria-hidden="true"><?= $hbg_svg ?></span><?php if ( $hbg_mobile_label ) : ?><span class="skate-navbar__icon-label"><?= esc_html( $hbg_mobile_label ) ?></span><?php endif; ?></button>
+		</div><!-- /.skate-navbar__right -->
+		<?php endif; ?>
+
+		</div><!-- /.skate-navbar__inner -->
+
+		<!-- Mobile menu panel -->
+		<div class="skate-navbar__mobile" id="skate-mobile-menu" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Navigation">
+			<div class="skate-navbar__mobile-overlay"></div>
+			<div class="skate-navbar__mobile-panel">
+
+				<!-- Panel header: logo + close -->
+				<div class="skate-navbar__mobile-header">
+					<div class="skate-navbar__mobile-logo">
+						<?php if ( $logo_url ) : ?>
+						<img src="<?= esc_url( $logo_url ) ?>"
+						     alt="<?= esc_attr( $logo_alt ) ?>"
+						     style="width:<?= $logo_size_mobile ?>px;max-width:100%;">
+						<?php endif; ?>
+					</div>
+					<button class="skate-navbar__mobile-close" aria-label="Close menu">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+							<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+						</svg>
+					</button>
+				</div>
+
+				<?php
+				$icons_with_title = array_filter( $icons, fn( $ic ) => ! empty( $ic['mobile_title'] ) );
+				?>
+				<?php if ( $links || $icons_with_title || ( $hbg_enabled && $hbg_columns ) ) : ?>
+				<!-- Mobile links -->
+				<div class="skate-navbar__mobile-links">
+					<?php foreach ( $icons_with_title as $icon ) :
+						$icon_url = skate_resolve_url( (int) ( $icon['page_id'] ?? 0 ), $icon['url'] ?? '' );
+					?>
+					<div class="skate-navbar__mobile-link-item">
+						<a href="<?= esc_url( $icon_url ) ?>" class="skate-navbar__mobile-link-header skate-navbar__mobile-link-header--icon">
+							<?php if ( ! empty( $icon['svg'] ) ) : ?>
+							<span class="skate-navbar__mobile-link-icon" aria-hidden="true"><?= $icon['svg'] ?></span>
+							<?php endif; ?>
+							<?= esc_html( $icon['mobile_title'] ) ?>
+						</a>
+					</div>
+					<?php endforeach; ?>
+					<?php foreach ( $links as $li => $link ) :
+						$has_sub = ! empty( $link['columns'] );
+					?>
+					<div class="skate-navbar__mobile-link-item">
+						<?php if ( $has_sub ) :
+						$mob_sub_id = 'skate-mob-sub-' . $li; ?>
+						<button class="skate-navbar__mobile-link-header" aria-expanded="false" aria-controls="<?= esc_attr( $mob_sub_id ) ?>">
+							<?= esc_html( $link['label'] ?? '' ) ?>
+						</button>
+						<div class="skate-navbar__mobile-submenu" id="<?= esc_attr( $mob_sub_id ) ?>">
+							<?php foreach ( ( $link['columns'] ?? [] ) as $col ) :
+								if ( ( $col['type'] ?? 'regular' ) === 'featured' ) :
+									$feat_post = get_post( (int) ( $col['post_id'] ?? 0 ) );
+									if ( $feat_post && $feat_post->post_status === 'publish' && $feat_post->post_type === 'wp_block' ) :
+										remove_filter( 'the_content', 'wpautop' );
+										$feat_html = do_shortcode( do_blocks( $feat_post->post_content ) );
+										add_filter( 'the_content', 'wpautop' );
+										?>
+							<div class="skate-navbar__mobile-featured">
+								<?= $feat_html // phpcs:ignore WordPress.Security.EscapeOutput ?>
+							</div>
+									<?php endif; ?>
+								<?php else : ?>
+									<?php foreach ( ( $col['groups'] ?? [] ) as $grp ) : ?>
+										<?php if ( ! empty( $grp['title'] ) ) : ?>
+							<div class="skate-navbar__mobile-group-title"><?= esc_html( $grp['title'] ) ?></div>
+										<?php endif; ?>
+										<?php foreach ( ( $grp['links'] ?? [] ) as $cl ) :
+											if ( empty( $cl['title'] ) ) continue;
+											$cl_url = skate_resolve_url( (int) ( $cl['page_id'] ?? 0 ), $cl['url'] ?? '', $cl['anchor'] ?? '' ); ?>
+							<a href="<?= esc_url( $cl_url ) ?>" class="skate-navbar__mobile-submenu-item">
+								<?= esc_html( $cl['title'] ) ?>
+							</a>
+										<?php endforeach; ?>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+						<?php else : ?>
+						<?php $link_url = skate_resolve_url( (int) ( $link['page_id'] ?? 0 ), $link['url'] ?? '' ); ?>
+						<a href="<?= esc_url( $link_url ) ?>" class="skate-navbar__mobile-link-header">
+							<?= esc_html( $link['label'] ?? '' ) ?>
+						</a>
+						<?php endif; ?>
+					</div>
+					<?php endforeach; ?>
+					<?php if ( $hbg_enabled && $hbg_columns ) : ?>
+					<!-- Mobile hamburger submenu -->
+					<div class="skate-navbar__mobile-link-item">
+						<button class="skate-navbar__mobile-link-header" aria-expanded="false" aria-controls="skate-mob-sub-hbg">
+							<?= esc_html( $hbg_mobile_title ) ?>
+						</button>
+						<div class="skate-navbar__mobile-submenu" id="skate-mob-sub-hbg">
+							<?php foreach ( $hbg_columns as $col ) :
+								if ( ( $col['type'] ?? 'regular' ) === 'featured' ) :
+									$feat_post = get_post( (int) ( $col['post_id'] ?? 0 ) );
+									if ( $feat_post && $feat_post->post_status === 'publish' && $feat_post->post_type === 'wp_block' ) :
+										remove_filter( 'the_content', 'wpautop' );
+										$feat_html = do_shortcode( do_blocks( $feat_post->post_content ) );
+										add_filter( 'the_content', 'wpautop' );
+							?>
+							<div class="skate-navbar__mobile-featured"><?= $feat_html // phpcs:ignore ?></div>
+									<?php endif; ?>
+								<?php else : ?>
+									<?php foreach ( ( $col['groups'] ?? [] ) as $grp ) : ?>
+										<?php if ( ! empty( $grp['title'] ) ) : ?>
+							<div class="skate-navbar__mobile-group-title"><?= esc_html( $grp['title'] ) ?></div>
+										<?php endif; ?>
+										<?php foreach ( ( $grp['links'] ?? [] ) as $cl ) :
+											if ( empty( $cl['title'] ) ) continue;
+											$cl_url = skate_resolve_url( (int) ( $cl['page_id'] ?? 0 ), $cl['url'] ?? '', $cl['anchor'] ?? '' ); ?>
+							<a href="<?= esc_url( $cl_url ) ?>" class="skate-navbar__mobile-submenu-item"><?= esc_html( $cl['title'] ) ?></a>
+										<?php endforeach; ?>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					</div>
+					<?php endif; ?>
+				</div>
+				<?php endif; ?>
+
+				<?php if ( $buttons ) : ?>
+				<!-- Mobile buttons -->
+				<div class="skate-navbar__mobile-buttons">
+					<?php foreach ( $buttons as $btn ) : ?>
+					<?php $btn_url = skate_resolve_url( (int) ( $btn['page_id'] ?? 0 ), $btn['url'] ?? '' ); ?>
+					<a href="<?= esc_url( $btn_url ) ?>" class="skate-navbar__btn skate-navbar__btn--<?= esc_attr( $btn['style'] ?? 'filled' ) ?>"><?= esc_html( $btn['label'] ?? '' ) ?></a>
+					<?php endforeach; ?>
+				</div>
+				<?php endif; ?>
+
+			</div>
+		</div>
+
+	</header>
+	<?php
+	$html = ob_get_clean();
+	// Strip HTML comments so wpautop cannot inject <br> tags after them.
+	return preg_replace( '/<!--.*?-->/s', '', $html );
+}
+
+// ----------------------------------------
+// Body class for navbar variant
+// ----------------------------------------
+add_filter( 'body_class', function ( $classes ) {
+	$v = get_option( 'skate_navbar_variant', 'standard' );
+	if ( $v && $v !== 'standard' ) {
+		$classes[] = 'skate-navbar--' . sanitize_html_class( $v );
+	}
+	if ( get_option( 'skate_navbar_link_text', 'inherit' ) === 'uppercase' ) {
+		$classes[] = 'skate-navbar--links-upper';
+	}
+	if ( get_option( 'skate_navbar_submenu_text', 'inherit' ) === 'uppercase' ) {
+		$classes[] = 'skate-navbar--submenus-upper';
+	}
+	return $classes;
+} );
+
+// ----------------------------------------
+// CSS injection for navbar link font size
+// ----------------------------------------
+add_action( 'wp_head', function () {
+	$allowed = [ 'small', 'medium', 'large', 'extra-large', 'extra-extra-large' ];
+	$slug    = get_option( 'skate_navbar_link_font_size', 'inherit' );
+	if ( ! in_array( $slug, $allowed, true ) ) return;
+	echo '<style id="skate-navbar-link-fs">#skate-navbar{--skate-navbar-link-fs:var(--wp--preset--font-size--' . esc_attr( $slug ) . ')}</style>';
+}, 20 );
+
+add_action( 'wp_head', function () {
+	$allowed = [ 'small', 'medium', 'large', 'extra-large', 'extra-extra-large' ];
+	$slug    = get_option( 'skate_navbar_submenu_font_size', 'medium' );
+	if ( ! in_array( $slug, $allowed, true ) ) return;
+	echo '<style id="skate-navbar-submenu-fs">#skate-navbar{--skate-navbar-submenu-fs:var(--wp--preset--font-size--' . esc_attr( $slug ) . ')}</style>';
+}, 20 );
+
+add_action( 'wp_head', function () {
+	$map = [ 's' => '5px', 'm' => '10px', 'l' => '16px' ];
+	$val = get_option( 'skate_navbar_submenu_gap', 's' );
+	if ( $val === 's' || ! isset( $map[ $val ] ) ) return; // 's' is the CSS default, no injection needed
+	echo '<style id="skate-navbar-submenu-gap">#skate-navbar{--skate-navbar-submenu-gap:' . $map[ $val ] . '}</style>';
+}, 20 );
+
+// ----------------------------------------
+// CSS injection for transparent variant (late, wins over any inline styles)
+// ----------------------------------------
+add_action( 'wp_head', function () {
+	$v          = get_option( 'skate_navbar_variant', 'standard' );
+	$logo_light = get_option( 'skate_navbar_logo_light', '' );
+
+	// Dark variant: switch to light logo
+	if ( $v === 'dark' && $logo_light ) {
+		echo '<style id="skate-navbar-dark-logo">';
+		echo 'body.skate-navbar--dark .skate-navbar .skate-navbar__logo-img:not(.skate-navbar__logo-light){display:none!important;}';
+		echo 'body.skate-navbar--dark .skate-navbar .skate-navbar__logo-light{display:inline-block!important;}';
+		echo '</style>';
+	}
+}, 999 );
+
+add_action( 'wp_head', function () {
+	$v = get_option( 'skate_navbar_variant', 'standard' );
+	if ( $v !== 'transparent' ) return;
+	$logo_light = get_option( 'skate_navbar_logo_light', '' );
+	echo '<style id="skate-navbar-transparent">';
+	// Base transparent state
+	echo '.skate-navbar--transparent{background:transparent!important;box-shadow:none!important;}';
+	// Scrolled state — white bg fades in
+	echo '.skate-navbar--transparent.skate-navbar--scrolled{background:var(--wp--preset--color--white,#fff)!important;box-shadow:0 2px 12px rgba(0,0,0,.08)!important;}';
+	// Logo handling
+	if ( $logo_light ) {
+		// Transparent: hide normal logo, show light logo
+		echo '.skate-navbar--transparent:not(.skate-navbar--scrolled) .skate-navbar__logo-img:not(.skate-navbar__logo-light){display:none!important;}';
+		echo '.skate-navbar--transparent:not(.skate-navbar--scrolled) .skate-navbar__logo-light{display:inline-block!important;}';
+		// Scrolled: show normal logo, hide light logo
+		echo '.skate-navbar--transparent.skate-navbar--scrolled .skate-navbar__logo-light{display:none!important;}';
+		echo '.skate-navbar--transparent.skate-navbar--scrolled .skate-navbar__logo-img:not(.skate-navbar__logo-light){display:block!important;}';
+	} else {
+		// No light logo: invert when transparent, restore when scrolled
+		echo '.skate-navbar--transparent:not(.skate-navbar--scrolled) .skate-navbar__logo-img{filter:brightness(0) invert(1);}';
+		echo '.skate-navbar--transparent.skate-navbar--scrolled .skate-navbar__logo-img{filter:none!important;}';
+	}
+	echo '</style>';
+}, 999 );
+
+// --pace-navbar-offset: used by templates to push content below the fixed navbar.
+// Transparent variant = 0 (content intentionally starts behind the navbar).
+add_action( 'wp_head', function () {
+	$variant        = get_option( 'skate_navbar_variant', 'standard' );
+	$desktop_offset = match ( $variant ) {
+		'transparent' => '0px',
+		'compact'     => '100px',
+		default       => '140px',
+	};
+	$mobile_offset  = $variant === 'transparent' ? '0px' : '60px';
+	echo '<style id="pace-navbar-offset">';
+	echo ':root{--pace-navbar-offset:' . $desktop_offset . ';}';
+	echo '@media(max-width:991px){:root{--pace-navbar-offset:' . $mobile_offset . ';}}';
+	echo '</style>';
+} );
+
+// ----------------------------------------
+// Admin only beyond this point
+// ----------------------------------------
+if ( ! is_admin() ) return;
+
+// ----------------------------------------
+// Admin menu registration
+// ----------------------------------------
+add_action( 'admin_menu', function () {
+	add_submenu_page(
+		'skate',
+		__( 'Skate – Navigation', 'skate' ),
+		__( 'Navigation', 'skate' ),
+		'manage_options',
+		'skate-navbar',
+		'skate_render_navbar_admin'
+	);
+} );
+
+// ── Preset option keys (shared between save/load handlers) ──────────────────
+define( 'SKATE_NAVBAR_PRESET_KEYS', [
+	'skate_navbar_links', 'skate_navbar_buttons', 'skate_navbar_icons',
+	'skate_navbar_variant', 'skate_navbar_logo_size', 'skate_navbar_logo_size_mobile',
+	'skate_navbar_logo_light', 'skate_navbar_submenu_icon_mode',
+	'skate_navbar_submenu_icon_default_svg', 'skate_navbar_col_bg_preset',
+	'skate_navbar_hamburger_enabled', 'skate_navbar_hamburger_svg',
+	'skate_navbar_hamburger_columns', 'skate_navbar_hamburger_mobile_title',
+	'skate_navbar_hamburger_mobile_label',
+] );
+
+// Handle named preset CRUD + export + legacy load
+add_action( 'admin_init', function () {
+
+	// ── Export presets (GET download) ────────────────────────────────────────
+	if (
+		isset( $_GET['skate_export_presets'] ) &&
+		isset( $_GET['_wpnonce'] ) &&
+		wp_verify_nonce( $_GET['_wpnonce'], 'skate_export_presets' ) &&
+		current_user_can( 'manage_options' )
+	) {
+		$presets = json_decode( get_option( 'skate_navbar_presets', '[]' ), true ) ?: [];
+		$json    = wp_json_encode( $presets, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="skate-navbar-presets.json"' );
+		header( 'Content-Length: ' . strlen( $json ) );
+		header( 'Cache-Control: no-cache' );
+		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput
+		exit;
+	}
+
+	$nonce_ok = isset( $_POST['skate_navbar_nonce'] )
+		&& wp_verify_nonce( $_POST['skate_navbar_nonce'], 'skate_save_navbar' )
+		&& current_user_can( 'manage_options' );
+	if ( ! $nonce_ok ) return;
+
+	// ── Save named preset ────────────────────────────────────────────────────
+	if ( isset( $_POST['skate_navbar_save_named_preset'] ) ) {
+		$name = sanitize_text_field( wp_unslash( $_POST['skate_navbar_preset_name'] ?? '' ) );
+		if ( ! $name ) $name = wp_date( 'j M Y, H:i' );
+		$data = [];
+		foreach ( SKATE_NAVBAR_PRESET_KEYS as $k ) {
+			$data[ $k ] = get_option( $k );
+		}
+		$presets   = json_decode( get_option( 'skate_navbar_presets', '[]' ), true ) ?: [];
+		$presets[] = [ 'id' => uniqid( '', true ), 'name' => $name, 'saved_at' => time(), 'data' => $data ];
+		update_option( 'skate_navbar_presets', wp_json_encode( $presets ) );
+		wp_safe_redirect( add_query_arg( [ 'page' => 'skate-navbar', 'tab' => 'submenus', 'preset_saved' => '1' ], admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	// ── Import presets from JSON ─────────────────────────────────────────────
+	if ( isset( $_POST['skate_navbar_import_presets'] ) ) {
+		$json     = wp_unslash( $_POST['skate_navbar_import_json'] ?? '' );
+		$imported = json_decode( $json, true );
+		if ( is_array( $imported ) ) {
+			$existing = json_decode( get_option( 'skate_navbar_presets', '[]' ), true ) ?: [];
+			foreach ( $imported as $p ) {
+				if ( isset( $p['name'], $p['data'] ) && is_array( $p['data'] ) ) {
+					$p['id'] = uniqid( '', true ); // fresh ID to avoid collisions
+					$existing[] = $p;
+				}
+			}
+			update_option( 'skate_navbar_presets', wp_json_encode( $existing ) );
+		}
+		wp_safe_redirect( add_query_arg( [ 'page' => 'skate-navbar', 'tab' => 'submenus', 'preset_imported' => '1' ], admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	// ── Load named preset ────────────────────────────────────────────────────
+	if ( isset( $_POST['skate_navbar_load_named_preset'] ) ) {
+		$id      = sanitize_text_field( wp_unslash( $_POST['skate_navbar_preset_id'] ?? '' ) );
+		$presets = json_decode( get_option( 'skate_navbar_presets', '[]' ), true ) ?: [];
+		foreach ( $presets as $preset ) {
+			if ( ( $preset['id'] ?? '' ) === $id ) {
+				foreach ( (array) ( $preset['data'] ?? [] ) as $key => $val ) {
+					if ( str_starts_with( $key, 'skate_navbar_' ) ) update_option( $key, $val );
+				}
+				break;
+			}
+		}
+		wp_safe_redirect( add_query_arg( [ 'page' => 'skate-navbar', 'tab' => 'submenus', 'preset' => '1' ], admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	// ── Delete preset ────────────────────────────────────────────────────────
+	if ( isset( $_POST['skate_navbar_delete_preset'] ) ) {
+		$id      = sanitize_text_field( wp_unslash( $_POST['skate_navbar_preset_id'] ?? '' ) );
+		$presets = json_decode( get_option( 'skate_navbar_presets', '[]' ), true ) ?: [];
+		$presets = array_values( array_filter( $presets, fn( $p ) => ( $p['id'] ?? '' ) !== $id ) );
+		update_option( 'skate_navbar_presets', wp_json_encode( $presets ) );
+		wp_safe_redirect( add_query_arg( [ 'page' => 'skate-navbar', 'tab' => 'submenus' ], admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	// ── Legacy load (hardcoded PHP defaults) ─────────────────────────────────
+	if ( isset( $_POST['skate_navbar_load_preset'] ) ) {
+		skate_navbar_seed( true );
+		wp_safe_redirect( add_query_arg( [ 'page' => 'skate-navbar', 'preset' => '1' ], admin_url( 'admin.php' ) ) );
+		exit;
+	}
+} );
+
+// Enqueue WP media uploader on this page
+add_action( 'admin_enqueue_scripts', function () {
+	$screen = get_current_screen();
+	if ( $screen && $screen->id === 'skate_page_skate-navbar' ) {
+		wp_enqueue_media();
+	}
+} );
+
+// ----------------------------------------
+// Admin render
+// ----------------------------------------
+function skate_render_navbar_admin(): void {
+	if ( ! current_user_can( 'manage_options' ) ) return;
+
+	$saved       = false;
+	$allowed_svg = skate_navbar_allowed_svg();
+
+	// ---- Save ----
+	if (
+		$_SERVER['REQUEST_METHOD'] === 'POST' &&
+		isset( $_POST['skate_navbar_nonce'] ) &&
+		wp_verify_nonce( $_POST['skate_navbar_nonce'], 'skate_save_navbar' )
+	) {
+		// Variant
+		update_option( 'skate_navbar_variant', sanitize_key( $_POST['skate_navbar_variant'] ?? 'standard' ) );
+
+		// Logo settings
+		update_option( 'skate_navbar_logo_size',        absint( $_POST['skate_navbar_logo_size']        ?? 118 ) );
+		update_option( 'skate_navbar_logo_size_mobile', absint( $_POST['skate_navbar_logo_size_mobile'] ?? 80  ) );
+		update_option( 'skate_navbar_logo_light',       esc_url_raw( wp_unslash( $_POST['skate_navbar_logo_light'] ?? '' ) ) );
+
+		// Submenu link icon settings
+		update_option( 'skate_navbar_submenu_icon_mode',        sanitize_key( $_POST['skate_navbar_submenu_icon_mode'] ?? 'arrow' ) );
+		update_option( 'skate_navbar_submenu_icon_default_svg', wp_kses( wp_unslash( $_POST['skate_navbar_submenu_icon_default_svg'] ?? '' ), $allowed_svg ) );
+		update_option( 'skate_navbar_col_bg_preset',            sanitize_key( $_POST['skate_navbar_col_bg_preset'] ?? 'none' ) );
+		update_option( 'skate_navbar_submenu_close',            isset( $_POST['skate_navbar_submenu_close'] ) ? '1' : '0' );
+		update_option( 'skate_navbar_link_text',                in_array( $_POST['skate_navbar_link_text'] ?? '', [ 'inherit', 'uppercase' ] ) ? $_POST['skate_navbar_link_text'] : 'inherit' );
+		$fs_allowed = [ 'inherit', 'small', 'medium', 'large' ];
+		update_option( 'skate_navbar_link_font_size',           in_array( $_POST['skate_navbar_link_font_size'] ?? '', $fs_allowed ) ? $_POST['skate_navbar_link_font_size'] : 'inherit' );
+		$sfs_allowed = [ 'small', 'medium', 'large' ];
+		update_option( 'skate_navbar_submenu_font_size',        in_array( $_POST['skate_navbar_submenu_font_size'] ?? '', $sfs_allowed ) ? $_POST['skate_navbar_submenu_font_size'] : 'medium' );
+		update_option( 'skate_navbar_submenu_text',             in_array( $_POST['skate_navbar_submenu_text'] ?? '', [ 'inherit', 'uppercase' ] ) ? $_POST['skate_navbar_submenu_text'] : 'inherit' );
+		update_option( 'skate_navbar_submenu_gap',              in_array( $_POST['skate_navbar_submenu_gap'] ?? '', [ 's', 'm', 'l' ] ) ? $_POST['skate_navbar_submenu_gap'] : 's' );
+
+		// Links + icon SVGs + submenu columns → groups → links
+		$link_labels      = (array) ( $_POST['skate_nav_link_label']        ?? [] );
+		$link_urls        = (array) ( $_POST['skate_nav_link_url']          ?? [] );
+		$link_page_ids    = array_map( 'absint', (array) ( $_POST['skate_nav_link_page_id'] ?? [] ) );
+		$link_icon_svgs   = (array) ( $_POST['skate_nav_link_icon_svg']     ?? [] );
+		$col_group_titles = (array) ( $_POST['skate_nav_col_group_title']   ?? [] );
+		$col_link_titles   = (array) ( $_POST['skate_nav_col_link_title']   ?? [] );
+		$col_link_urls     = (array) ( $_POST['skate_nav_col_link_url']     ?? [] );
+		$col_link_pids     = (array) ( $_POST['skate_nav_col_link_pid']     ?? [] );
+		$col_link_svgs     = (array) ( $_POST['skate_nav_col_link_svg']     ?? [] );
+		$col_link_anchors  = (array) ( $_POST['skate_nav_col_link_anchor']  ?? [] );
+
+		$links = [];
+		foreach ( $link_labels as $i => $raw_label ) {
+			$label    = sanitize_text_field( wp_unslash( $raw_label ) );
+			$url      = esc_url_raw( wp_unslash( $link_urls[ $i ] ?? '' ) );
+			$icon_svg = wp_kses( wp_unslash( $link_icon_svgs[ $i ] ?? '' ), $allowed_svg );
+			if ( ! $label && ! $url ) continue;
+
+			// Build regular columns indexed by ci
+			$reg_cols = [];
+			foreach ( array_keys( $col_group_titles[ $i ] ?? [] ) as $ci ) {
+				$ci     = (int) $ci;
+				$groups = [];
+				foreach ( array_keys( $col_group_titles[ $i ][ $ci ] ?? [] ) as $gi ) {
+					$grp_title       = sanitize_text_field( wp_unslash( $col_group_titles[ $i ][ $ci ][ $gi ] ?? '' ) );
+					$raw_link_titles = (array) ( $col_link_titles[ $i ][ $ci ][ $gi ] ?? [] );
+					$grp_links = [];
+					foreach ( $raw_link_titles as $k => $raw_lt ) {
+						$lt   = sanitize_text_field( wp_unslash( $raw_lt ) );
+						$lu   = esc_url_raw( wp_unslash( $col_link_urls[ $i ][ $ci ][ $gi ][ $k ] ?? '' ) );
+						$pid  = absint( $col_link_pids[ $i ][ $ci ][ $gi ][ $k ] ?? 0 );
+						$lsvg = wp_kses( wp_unslash( $col_link_svgs[ $i ][ $ci ][ $gi ][ $k ] ?? '' ), $allowed_svg );
+						$la   = ltrim( sanitize_text_field( wp_unslash( $col_link_anchors[ $i ][ $ci ][ $gi ][ $k ] ?? '' ) ), '#' );
+						if ( ! $lt && ! $lu && ! $pid ) continue;
+						$entry = [ 'title' => $lt, 'url' => $lu, 'page_id' => $pid, 'icon_svg' => $lsvg ];
+						if ( $la !== '' ) $entry['anchor'] = $la;
+						$grp_links[] = $entry;
+					}
+					if ( $grp_title || $grp_links ) {
+						$groups[] = [ 'title' => $grp_title, 'links' => $grp_links ];
+					}
+				}
+				if ( $groups ) $reg_cols[ $ci ] = [ 'type' => 'regular', 'groups' => $groups ];
+			}
+
+			// Build featured columns indexed by fci
+			$feat_cols = [];
+			foreach ( (array) ( $_POST['skate_nav_featured_post_id'][ $i ] ?? [] ) as $fci => $pid ) {
+				$pid = (int) $pid;
+				if ( $pid > 0 ) {
+					$bg = sanitize_hex_color( $_POST['skate_nav_featured_bg_color'][ $i ][ $fci ] ?? '' );
+					$feat_cols[ (int) $fci ] = [ 'type' => 'featured', 'post_id' => $pid, 'bg_color' => $bg ?: '' ];
+				}
+			}
+
+			// Assemble columns in order declared by the JS order input
+			$col_order_raw = wp_unslash( $_POST['skate_nav_col_order'][ $i ] ?? '[]' );
+			$col_order     = json_decode( $col_order_raw, true );
+			$columns       = [];
+			if ( is_array( $col_order ) && $col_order ) {
+				foreach ( $col_order as $item ) {
+					if ( ( $item['type'] ?? '' ) === 'regular' ) {
+						$ci = (int) ( $item['ci'] ?? -1 );
+						if ( isset( $reg_cols[ $ci ] ) ) $columns[] = $reg_cols[ $ci ];
+					} elseif ( ( $item['type'] ?? '' ) === 'featured' ) {
+						$fci = (int) ( $item['fci'] ?? -1 );
+						if ( isset( $feat_cols[ $fci ] ) ) $columns[] = $feat_cols[ $fci ];
+					}
+				}
+			} else {
+				$columns = array_values( $reg_cols ); // fallback: no order input
+			}
+
+			$links[] = [
+				'label'    => $label,
+				'url'      => $url,
+				'page_id'  => $link_page_ids[$i] ?? 0,
+				'icon_svg' => $icon_svg,
+				'columns'  => $columns,
+			];
+		}
+		update_option( 'skate_navbar_links', wp_json_encode( $links ) );
+
+		// Buttons
+		$btn_labels   = (array) ( $_POST['skate_nav_btn_label'] ?? [] );
+		$btn_urls     = (array) ( $_POST['skate_nav_btn_url']   ?? [] );
+		$btn_page_ids = array_map( 'absint', (array) ( $_POST['skate_nav_btn_page_id'] ?? [] ) );
+		$btn_styles   = (array) ( $_POST['skate_nav_btn_style'] ?? [] );
+		$valid_styles = [ 'filled', 'outline', 'filled-dark' ];
+		$buttons    = [];
+		foreach ( $btn_labels as $i => $raw_label ) {
+			$label = sanitize_text_field( wp_unslash( $raw_label ) );
+			$url   = esc_url_raw( wp_unslash( $btn_urls[ $i ] ?? '' ) );
+			if ( ! $label && ! $url ) continue;
+			$style     = in_array( $btn_styles[ $i ] ?? '', $valid_styles, true ) ? $btn_styles[ $i ] : 'filled';
+			$buttons[] = [ 'label' => $label, 'url' => $url, 'page_id' => $btn_page_ids[$i] ?? 0, 'style' => $style ];
+		}
+		update_option( 'skate_navbar_buttons', wp_json_encode( $buttons ) );
+
+		// Icons
+		$icon_svgs          = (array) ( $_POST['skate_nav_icon_svg']          ?? [] );
+		$icon_urls          = (array) ( $_POST['skate_nav_icon_url']          ?? [] );
+		$icon_page_ids      = array_map( 'absint', (array) ( $_POST['skate_nav_icon_page_id'] ?? [] ) );
+		$icon_mobile_titles = (array) ( $_POST['skate_nav_icon_mobile_title'] ?? [] );
+		$icons       = [];
+		foreach ( $icon_svgs as $i => $raw_svg ) {
+			$svg          = wp_kses( wp_unslash( $raw_svg ), $allowed_svg );
+			$url          = esc_url_raw( wp_unslash( $icon_urls[ $i ] ?? '' ) );
+			$mobile_title = sanitize_text_field( wp_unslash( $icon_mobile_titles[ $i ] ?? '' ) );
+			if ( ! $svg ) continue;
+			$icons[] = [ 'svg' => $svg, 'url' => $url, 'page_id' => $icon_page_ids[$i] ?? 0, 'mobile_title' => $mobile_title ];
+		}
+		update_option( 'skate_navbar_icons', wp_json_encode( $icons ) );
+
+		// Hamburger Menu
+		update_option( 'skate_navbar_hamburger_enabled', isset( $_POST['skate_nav_hamburger_enabled'] ) ? '1' : '0' );
+		$hbg_svg_raw = wp_unslash( $_POST['skate_nav_hamburger_svg'] ?? '' );
+		update_option( 'skate_navbar_hamburger_svg', wp_kses( $hbg_svg_raw, $allowed_svg ) );
+
+		// Hamburger columns — uses same POST fields as regular links with li='hbg'
+		$hbg_li = 'hbg';
+		$hbg_reg_cols = [];
+		foreach ( array_keys( $col_group_titles[ $hbg_li ] ?? [] ) as $ci ) {
+			$ci     = (int) $ci;
+			$groups = [];
+			foreach ( array_keys( $col_group_titles[ $hbg_li ][ $ci ] ?? [] ) as $gi ) {
+				$grp_title       = sanitize_text_field( wp_unslash( $col_group_titles[ $hbg_li ][ $ci ][ $gi ] ?? '' ) );
+				$raw_link_titles = (array) ( $col_link_titles[ $hbg_li ][ $ci ][ $gi ] ?? [] );
+				$grp_links = [];
+				foreach ( $raw_link_titles as $k => $raw_lt ) {
+					$lt   = sanitize_text_field( wp_unslash( $raw_lt ) );
+					$lu   = esc_url_raw( wp_unslash( $col_link_urls[ $hbg_li ][ $ci ][ $gi ][ $k ] ?? '' ) );
+					$pid  = absint( $col_link_pids[ $hbg_li ][ $ci ][ $gi ][ $k ] ?? 0 );
+					$lsvg = wp_kses( wp_unslash( $col_link_svgs[ $hbg_li ][ $ci ][ $gi ][ $k ] ?? '' ), $allowed_svg );
+					$la   = ltrim( sanitize_text_field( wp_unslash( $col_link_anchors[ $hbg_li ][ $ci ][ $gi ][ $k ] ?? '' ) ), '#' );
+					if ( ! $lt && ! $lu && ! $pid ) continue;
+					$entry = [ 'title' => $lt, 'url' => $lu, 'page_id' => $pid, 'icon_svg' => $lsvg ];
+					if ( $la !== '' ) $entry['anchor'] = $la;
+					$grp_links[] = $entry;
+				}
+				if ( $grp_title || $grp_links ) $groups[] = [ 'title' => $grp_title, 'links' => $grp_links ];
+			}
+			if ( $groups ) $hbg_reg_cols[ $ci ] = [ 'type' => 'regular', 'groups' => $groups ];
+		}
+		$hbg_feat_cols = [];
+		foreach ( (array) ( $_POST['skate_nav_featured_post_id'][ $hbg_li ] ?? [] ) as $fci => $pid ) {
+			$pid      = (int) $pid;
+			$bg_color = sanitize_hex_color( $_POST['skate_nav_featured_bg_color'][ $hbg_li ][ $fci ] ?? '' ) ?: '';
+			if ( $pid > 0 ) $hbg_feat_cols[ (int) $fci ] = [ 'type' => 'featured', 'post_id' => $pid, 'bg_color' => $bg_color ];
+		}
+		$hbg_col_order = json_decode( wp_unslash( $_POST['skate_nav_col_order'][ $hbg_li ] ?? '[]' ), true );
+		$hbg_columns   = [];
+		if ( is_array( $hbg_col_order ) ) {
+			foreach ( $hbg_col_order as $item ) {
+				if ( ( $item['type'] ?? '' ) === 'featured' && isset( $hbg_feat_cols[ (int) ( $item['fci'] ?? -1 ) ] ) ) {
+					$hbg_columns[] = $hbg_feat_cols[ (int) $item['fci'] ];
+				} elseif ( ( $item['type'] ?? '' ) === 'regular' && isset( $hbg_reg_cols[ (int) ( $item['ci'] ?? -1 ) ] ) ) {
+					$hbg_columns[] = $hbg_reg_cols[ (int) $item['ci'] ];
+				}
+			}
+		} else {
+			foreach ( $hbg_reg_cols as $col ) $hbg_columns[] = $col;
+			foreach ( $hbg_feat_cols as $col ) $hbg_columns[] = $col;
+		}
+		update_option( 'skate_navbar_hamburger_columns', wp_json_encode( $hbg_columns ) );
+		update_option( 'skate_navbar_hamburger_mobile_title',
+			sanitize_text_field( wp_unslash( $_POST['skate_nav_hamburger_mobile_title'] ?? 'Übersicht Menu' ) )
+		);
+		update_option( 'skate_navbar_hamburger_mobile_label',
+			sanitize_text_field( wp_unslash( $_POST['skate_nav_hamburger_mobile_label'] ?? 'Menü' ) )
+		);
+
+		$saved = true;
+	}
+
+	// ---- Current values ----
+	$variant          = get_option( 'skate_navbar_variant', 'standard' );
+	$logo_size        = (int) get_option( 'skate_navbar_logo_size', 118 );
+	$logo_size_mobile = (int) get_option( 'skate_navbar_logo_size_mobile', 80 );
+	$logo_light_url   = get_option( 'skate_navbar_logo_light', '' );
+	$links                        = json_decode( get_option( 'skate_navbar_links',   '[]' ), true ) ?: [];
+	$buttons                      = json_decode( get_option( 'skate_navbar_buttons', '[]' ), true ) ?: [];
+	$icons                        = json_decode( get_option( 'skate_navbar_icons',   '[]' ), true ) ?: [];
+	$hbg_enabled_opt              = (bool) get_option( 'skate_navbar_hamburger_enabled', '1' );
+	$hbg_svg_opt                  = get_option( 'skate_navbar_hamburger_svg', '' );
+	$hbg_columns_opt              = json_decode( get_option( 'skate_navbar_hamburger_columns', '[]' ), true ) ?: [];
+	$sub_icon_mode_opt            = get_option( 'skate_navbar_submenu_icon_mode', 'arrow' );
+	$sub_icon_default_svg_opt     = get_option( 'skate_navbar_submenu_icon_default_svg', '' );
+	$col_bg_preset_opt            = get_option( 'skate_navbar_col_bg_preset', 'none' );
+	$link_text_opt                = get_option( 'skate_navbar_link_text', 'inherit' );
+	$link_font_size_opt           = get_option( 'skate_navbar_link_font_size', 'inherit' );
+	$submenu_font_size_opt        = get_option( 'skate_navbar_submenu_font_size', 'medium' );
+	$submenu_text_opt             = get_option( 'skate_navbar_submenu_text', 'inherit' );
+	$submenu_gap_opt              = get_option( 'skate_navbar_submenu_gap', 's' );
+	$presets                      = json_decode( get_option( 'skate_navbar_presets', '[]' ), true ) ?: [];
+
+	// Active tab from query string (default: main)
+	$active_tab = isset( $_GET['tab'] ) && $_GET['tab'] === 'submenus' ? 'submenus' : 'main';
+
+	// Get published pages for picker
+	$picker_posts = get_posts( [
+		'post_type'   => [ 'page', 'seo_page' ],
+		'post_status' => 'publish',
+		'numberposts' => 500,
+		'orderby'     => 'title',
+		'order'       => 'ASC',
+	] );
+	$picker_pages_json = wp_json_encode( array_map( function( $p ) {
+		return [ 'id' => $p->ID, 'title' => $p->post_title, 'url' => get_permalink( $p->ID ) ];
+	}, $picker_posts ) );
+
+	// Page picker component builder
+	$skate_url_picker = function( string $url_name, string $pid_name, string $url_val, int $pid_val, string $style = 'flex:1;min-width:140px;', bool $unresolved = false ): string {
+		$page_title  = $pid_val ? get_the_title( $pid_val ) : '';
+		$has_link    = $pid_val && $page_title;
+		// Show the page permalink in the URL field when the page is linked but URL is empty
+		if ( $has_link && $url_val === '' ) {
+			$url_val = get_permalink( $pid_val ) ?: '';
+		}
+		ob_start();
+		?>
+		<div class="skate-url-wrap" style="<?= esc_attr( $style ) ?>">
+			<input type="hidden" name="<?= esc_attr( $pid_name ) ?>" value="<?= $pid_val ?>" class="skate-pid">
+			<div class="skate-pp-row">
+				<input type="text" name="<?= esc_attr( $url_name ) ?>" value="<?= esc_attr( $url_val ) ?>" placeholder="URL" class="skate-url-input">
+				<div class="skate-pp-wrap">
+					<button type="button" class="button skate-pp-open">Page</button>
+					<div class="skate-pp-panel" hidden>
+						<input type="text" class="skate-pp-filter" placeholder="Search...">
+						<div class="skate-pp-results"></div>
+					</div>
+				</div>
+			</div>
+			<div class="skate-pid-linked"<?= $has_link ? '' : ' hidden' ?>>
+				<span class="skate-pid-icon">&#128196;</span>
+				<span class="skate-pid-linked-title"><?= esc_html( $page_title ) ?></span>
+				<button type="button" class="skate-pid-unlink" title="Remove link">&#x2715;</button>
+			</div>
+			<?php if ( $unresolved ) : ?>
+			<div class="skate-url-unresolved">
+				&#9888; Page not found — URL will be used as-is
+			</div>
+			<?php endif; ?>
+		</div>
+		<?php
+		return ob_get_clean();
+	};
+	?>
+	<div class="wrap skate-identity-wrap">
+		<h1>Navigation</h1>
+
+		<?php if ( $saved ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?= __( 'Saved.', 'skate' ) ?></p></div>
+		<?php endif; ?>
+
+		<!-- Tabs -->
+		<div class="skate-tune-tabs">
+			<a href="?page=skate-navbar&tab=main"     class="skate-tune-tab<?= $active_tab === 'main'     ? ' is-active' : '' ?>">Navigation</a>
+			<a href="?page=skate-navbar&tab=submenus" class="skate-tune-tab<?= $active_tab === 'submenus' ? ' is-active' : '' ?>">Submenus</a>
+		</div>
+
+		<form method="post" action="?page=skate-navbar&tab=<?= esc_attr( $active_tab ) ?>" id="skate-navbar-form">
+			<?php wp_nonce_field( 'skate_save_navbar', 'skate_navbar_nonce' ); ?>
+			<script>window.skatePages = <?= $picker_pages_json ?>;</script>
+
+			<!-- ======================================================== -->
+			<!-- TAB: Navigation                                           -->
+			<!-- ======================================================== -->
+			<div id="skate-tab-main"<?= $active_tab !== 'main' ? ' hidden' : '' ?>>
+			<div class="skate-submenus-layout">
+			<div class="skate-submenus-main">
+
+				<!-- SECTION: Variant -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Style</h2>
+					</div>
+					<div class="skate-tune-row" style="align-items:flex-start;padding-top:16px;">
+						<label class="skate-tune-label" style="padding-top:12px;">Variant</label>
+						<div class="skate-tune-control">
+							<div class="skate-variant-cards">
+								<?php
+								$variants = [
+									'standard'    => 'Standard',
+									'centered'    => 'Centered',
+									'transparent' => 'Transparent',
+									'compact'     => 'Kompakt',
+									'dark'        => 'Dark',
+								];
+								foreach ( $variants as $val => $lbl ) : ?>
+								<label class="skate-variant-card<?= $variant === $val ? ' is-active' : '' ?>">
+									<input type="radio" name="skate_navbar_variant" value="<?= esc_attr( $val ) ?>"<?= checked( $variant, $val, false ) ?> hidden>
+									<span class="skate-variant-preview skate-variant-preview--<?= esc_attr( $val ) ?>">
+										<span class="pvp-bar">
+											<span class="pvp-logo"></span>
+											<span class="pvp-links">
+												<span class="pvp-link"></span>
+												<span class="pvp-link"></span>
+												<span class="pvp-link"></span>
+											</span>
+											<span class="pvp-btn"></span>
+										</span>
+										<span class="pvp-content">
+											<span class="pvp-line"></span>
+											<span class="pvp-line pvp-line--short"></span>
+											<span class="pvp-line"></span>
+										</span>
+									</span>
+									<span class="skate-variant-name"><?= esc_html( $lbl ) ?></span>
+								</label>
+								<?php endforeach; ?>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- SECTION: Logo -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Logo</h2>
+					</div>
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Size Desktop (px)</label>
+						<div class="skate-tune-control">
+							<input type="number" name="skate_navbar_logo_size" value="<?= esc_attr( $logo_size ) ?>" min="40" max="400" style="width:80px;">
+						</div>
+					</div>
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Size Mobile (px)</label>
+						<div class="skate-tune-control">
+							<input type="number" name="skate_navbar_logo_size_mobile" value="<?= esc_attr( $logo_size_mobile ) ?>" min="30" max="200" style="width:80px;">
+						</div>
+					</div>
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Logo Light</label>
+						<div class="skate-tune-control">
+							<input type="text" name="skate_navbar_logo_light" id="skate_navbar_logo_light_url"
+							       value="<?= esc_attr( $logo_light_url ) ?>" style="width:320px;max-width:100%;"
+							       placeholder="https://...">
+							<button type="button" class="button" id="skate-logo-light-btn">Choose image</button>
+							<button type="button" class="button skate-media-remove" id="skate-logo-light-remove"<?= $logo_light_url ? '' : ' hidden' ?>>✕</button>
+							<img id="skate-logo-light-preview" src="<?= esc_url( $logo_light_url ) ?>" style="height:36px;width:auto;border:1px solid #ddd;border-radius:4px;padding:2px;background:#999;<?= $logo_light_url ? '' : 'display:none;' ?>"><?php // phpcs:ignore ?>
+						</div>
+					</div>
+				</div>
+
+				<!-- SECTION: Links -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Links</h2>
+						<p class="skate-tune-desc">Main navigation links with optional SVG icon on the left.</p>
+					</div>
+					<div id="skate-nav-links-container" class="skate-nb-repeater">
+						<?php foreach ( $links as $li => $link ) : ?>
+						<div class="skate-nav-link-row">
+							<span class="skate-social-drag-handle" title="Reorder">⠿</span>
+							<div class="skate-nb-svg-wrap">
+								<div class="skate-nb-svg-preview"><?= $link['icon_svg'] ?? '' ?></div>
+								<textarea name="skate_nav_link_icon_svg[]" rows="2" placeholder="SVG"><?= esc_textarea( $link['icon_svg'] ?? '' ) ?></textarea>
+							</div>
+							<input type="text" name="skate_nav_link_label[]" value="<?= esc_attr( $link['label'] ?? '' ) ?>" placeholder="Label" style="width:150px;">
+							<?= $skate_url_picker( 'skate_nav_link_url[]', 'skate_nav_link_page_id[]', $link['url'] ?? '', (int)($link['page_id'] ?? 0), 'flex:1;min-width:140px;', (bool)($link['unresolved'] ?? false) ) ?>
+							<button type="button" class="button skate-nb-remove" data-cls="skate-nav-link-row">✕</button>
+						</div>
+						<?php endforeach; ?>
+					</div>
+					<div class="skate-nb-add-row">
+						<button type="button" class="button" id="skate-add-link">+ Add link</button>
+					</div>
+				</div>
+
+				<!-- SECTION: Buttons -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Buttons</h2>
+					</div>
+					<div id="skate-nav-buttons-container" class="skate-nb-repeater">
+						<?php foreach ( $buttons as $btn ) : ?>
+						<div class="skate-nav-btn-row">
+							<span class="skate-social-drag-handle">⠿</span>
+							<input type="text" name="skate_nav_btn_label[]" value="<?= esc_attr( $btn['label'] ?? '' ) ?>" placeholder="Label" style="width:150px;">
+							<?= $skate_url_picker( 'skate_nav_btn_url[]', 'skate_nav_btn_page_id[]', $btn['url'] ?? '', (int)($btn['page_id'] ?? 0), 'flex:1;min-width:140px;', (bool)($btn['unresolved'] ?? false) ) ?>
+							<select name="skate_nav_btn_style[]" style="width:130px;">
+								<option value="filled"      <?= selected( $btn['style'] ?? '', 'filled',      false ) ?>>Filled Secondary</option>
+								<option value="filled-dark" <?= selected( $btn['style'] ?? '', 'filled-dark', false ) ?>>Filled Primary</option>
+								<option value="outline"     <?= selected( $btn['style'] ?? '', 'outline',     false ) ?>>Outline</option>
+							</select>
+							<button type="button" class="button skate-nb-remove" data-cls="skate-nav-btn-row">✕</button>
+						</div>
+						<?php endforeach; ?>
+					</div>
+					<div class="skate-nb-add-row">
+						<button type="button" class="button" id="skate-add-btn">+ Add button</button>
+					</div>
+				</div>
+
+				<!-- SECTION: Icons -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Icons</h2>
+						<p class="skate-tune-desc">SVG icons rendered as links in the navbar.</p>
+					</div>
+					<div id="skate-nav-icons-container" class="skate-nb-repeater">
+						<?php foreach ( $icons as $icon ) : ?>
+						<div class="skate-nav-icon-row">
+							<span class="skate-social-drag-handle">⠿</span>
+							<div class="skate-nb-svg-wrap">
+								<div class="skate-nb-svg-preview"><?= $icon['svg'] ?? '' ?></div>
+								<textarea name="skate_nav_icon_svg[]" rows="3" placeholder="SVG"><?= esc_textarea( $icon['svg'] ?? '' ) ?></textarea>
+							</div>
+							<?= $skate_url_picker( 'skate_nav_icon_url[]', 'skate_nav_icon_page_id[]', $icon['url'] ?? '', (int)($icon['page_id'] ?? 0), 'flex:1;min-width:140px;', (bool)($icon['unresolved'] ?? false) ) ?>
+							<input type="text" name="skate_nav_icon_mobile_title[]" value="<?= esc_attr( $icon['mobile_title'] ?? '' ) ?>" placeholder="Label" style="width:120px;" title="Label shown below the icon (leave empty to hide)">
+							<button type="button" class="button skate-nb-remove" data-cls="skate-nav-icon-row">✕</button>
+						</div>
+						<?php endforeach; ?>
+					</div>
+					<div class="skate-nb-add-row">
+						<button type="button" class="button" id="skate-add-icon">+ Add icon</button>
+					</div>
+				</div>
+
+				<!-- SECTION: Hamburger Menu -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head" style="display:flex;align-items:center;justify-content:space-between;">
+						<div>
+							<h2 class="skate-tune-title">Hamburger Menu</h2>
+							<p class="skate-tune-desc">Opens a dropdown menu. Contents are configured in the "Submenus" tab.</p>
+						</div>
+						<label class="skate-toggle" title="Enable / Disable">
+							<input type="checkbox" name="skate_nav_hamburger_enabled" value="1"<?= $hbg_enabled_opt ? ' checked' : '' ?>>
+							<span class="skate-toggle-track"></span>
+						</label>
+					</div>
+					<div style="padding:12px 16px;display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;"<?= $hbg_enabled_opt ? '' : ' hidden' ?> class="skate-hbg-body">
+						<!-- SVG -->
+						<div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
+							<div class="skate-nb-svg-preview" style="width:40px;height:40px;"><?= $hbg_svg_opt ?: SKATE_HBG_DEFAULT_SVG ?></div>
+							<textarea name="skate_nav_hamburger_svg" rows="2" placeholder="SVG" style="width:120px;font-size:11px;"><?= esc_textarea( $hbg_svg_opt ) ?></textarea>
+							<span style="font-size:11px;color:#8c8f94;">Leave empty for default</span>
+						</div>
+						<!-- Fields -->
+						<div style="display:flex;flex-direction:column;gap:10px;">
+							<label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+								<span style="width:120px;font-weight:600;">Label</span>
+								<input type="text" name="skate_nav_hamburger_mobile_label"
+								       value="<?= esc_attr( get_option( 'skate_navbar_hamburger_mobile_label', 'Menü' ) ) ?>"
+								       placeholder="Menü" style="width:160px;">
+								<span style="font-size:11px;color:#8c8f94;">Label below icon in mobile bar</span>
+							</label>
+							<label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+								<span style="width:120px;font-weight:600;">Panel title</span>
+								<input type="text" name="skate_nav_hamburger_mobile_title"
+								       value="<?= esc_attr( get_option( 'skate_navbar_hamburger_mobile_title', 'Übersicht Menu' ) ) ?>"
+								       placeholder="Übersicht Menu" style="width:160px;">
+								<span style="font-size:11px;color:#8c8f94;">Title in mobile panel</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+			</div><!-- /.skate-submenus-main -->
+
+			<!-- ── Right sidebar: fine tuning ── -->
+			<div class="skate-submenus-sidebar">
+
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Fine Tuning</h2>
+					</div>
+
+					<!-- Text transform -->
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Text</label>
+						<div class="skate-tune-control">
+							<div class="skate-icon-mode-cards">
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_link_text" value="inherit"<?= checked( $link_text_opt, 'inherit', false ) ?>>
+									<span>Inherit</span>
+								</label>
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_link_text" value="uppercase"<?= checked( $link_text_opt, 'uppercase', false ) ?>>
+									<span>Mayus</span>
+								</label>
+							</div>
+							<p class="description" style="margin-top:6px;">Link label text transform.</p>
+						</div>
+					</div>
+
+					<!-- Font size -->
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Font size</label>
+						<div class="skate-tune-control">
+							<div class="skate-icon-mode-cards">
+								<?php
+								$fs_options = [
+									'inherit' => 'Auto',
+									'small'   => 'S',
+									'medium'  => 'M',
+									'large'   => 'L',
+								];
+								foreach ( $fs_options as $fs_val => $fs_label ) : ?>
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_link_font_size" value="<?= esc_attr( $fs_val ) ?>"<?= checked( $link_font_size_opt, $fs_val, false ) ?>>
+									<span><?= esc_html( $fs_label ) ?></span>
+								</label>
+								<?php endforeach; ?>
+							</div>
+							<p class="description" style="margin-top:6px;">Applies to navbar link labels.</p>
+						</div>
+					</div>
+
+				</div>
+
+				<!-- Save -->
+				<div class="skate-sidebar-actions">
+					<input type="submit" class="button-primary" value="Save" style="width:100%;">
+				</div>
+
+			</div><!-- /.skate-submenus-sidebar -->
+			</div><!-- /.skate-submenus-layout -->
+
+			</div><!-- /#skate-tab-main -->
+
+			<!-- ======================================================== -->
+			<!-- TAB: Submenus                                             -->
+			<!-- ======================================================== -->
+			<div id="skate-tab-submenus"<?= $active_tab !== 'submenus' ? ' hidden' : '' ?>>
+			<div class="skate-submenus-layout">
+			<div class="skate-submenus-main">
+
+				<?php
+				// Query featured-column patterns once (used for regular links and hamburger)
+				$menu_patterns = get_posts( [
+					'post_type'      => 'wp_block',
+					'posts_per_page' => -1,
+					'post_status'    => 'publish',
+					'orderby'        => 'title',
+					'order'          => 'ASC',
+					'tax_query'      => [ [
+						'taxonomy' => 'wp_pattern_category',
+						'field'    => 'slug',
+						'terms'    => [ 'menu-featured-column' ],
+					] ],
+				] );
+				?>
+
+				<?php if ( empty( $links ) ) : ?>
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<p class="skate-tune-desc">No links configured yet. Add links in the "Navigation" tab first.</p>
+					</div>
+				</div>
+				<?php else : ?>
+
+				<?php foreach ( $links as $li => $link ) : ?>
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title"><?= esc_html( $link['label'] ?: '(Link ' . ( $li + 1 ) . ')' ) ?></h2>
+						<p class="skate-tune-desc">Each column contains one or more groups. Each group has a title and links.</p>
+					</div>
+					<?php
+					// Normalize: migrate old 'featured' key into unified columns array
+					$all_cols = $link['columns'] ?? [];
+					if ( ! empty( $link['featured']['post_id'] ) ) {
+						$has_feat_col = ! empty( array_filter( $all_cols, fn( $c ) => ( $c['type'] ?? 'regular' ) === 'featured' ) );
+						if ( ! $has_feat_col ) $all_cols[] = [ 'type' => 'featured', 'post_id' => (int) $link['featured']['post_id'] ];
+					}
+
+					// Separate ci/fci indices and build order array
+					$ci = 0; $fci = 0;
+					$order_arr   = [];
+					$render_cols = [];
+					foreach ( $all_cols as $col ) {
+						if ( ( $col['type'] ?? 'regular' ) === 'featured' ) {
+							$order_arr[]   = [ 'type' => 'featured', 'fci' => $fci ];
+							$render_cols[] = [ 'type' => 'featured', 'fci' => $fci, 'post_id' => (int) ( $col['post_id'] ?? 0 ), 'bg_color' => $col['bg_color'] ?? '' ];
+							$fci++;
+						} else {
+							$order_arr[]   = [ 'type' => 'regular', 'ci' => $ci ];
+							$render_cols[] = [ 'type' => 'regular', 'ci' => $ci, 'col' => $col ];
+							$ci++;
+						}
+					}
+					$next_ci  = $ci;
+					$next_fci = $fci;
+					?>
+					<input type="hidden" name="skate_nav_col_order[<?= $li ?>]" class="skate-col-order-input" value="<?= esc_attr( wp_json_encode( $order_arr ) ) ?>">
+					<?php
+					$chevron_svg = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+					$close_svg   = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+					?>
+					<div class="skate-sub-col-wrap" id="skate-sub-col-wrap-<?= $li ?>" data-li="<?= $li ?>" data-next-ci="<?= $next_ci ?>" data-next-fci="<?= $next_fci ?>">
+						<?php foreach ( $render_cols as $rcol ) :
+							if ( $rcol['type'] === 'featured' ) :
+								$fci_r          = $rcol['fci'];
+								$feat_pid       = $rcol['post_id'];
+								$feat_bg_color  = $rcol['bg_color'] ?? '';
+								$eu_active      = $feat_pid ? admin_url( 'site-editor.php?postType=wp_block&postId=' . $feat_pid . '&canvas=edit' ) : '';
+						?>
+						<div class="skate-sub-col-card skate-featured-col-card is-collapsed" data-fci="<?= $fci_r ?>" draggable="true">
+							<div class="skate-sub-col-card-head">
+								<span class="skate-col-drag-handle" title="Drag to reorder">⠿</span>
+								<span class="skate-sub-col-label">Featured</span>
+								<button type="button" class="skate-col-collapse" title="Toggle"><?= $chevron_svg ?></button>
+								<button type="button" class="skate-featured-col-remove" title="Remove"><?= $close_svg ?></button>
+							</div>
+							<div class="skate-featured-col-body">
+								<?php if ( $menu_patterns ) : ?>
+								<select name="skate_nav_featured_post_id[<?= $li ?>][<?= $fci_r ?>]" class="skate-featured-select">
+									<option value="0">— None —</option>
+									<?php foreach ( $menu_patterns as $pat_post ) :
+										$eu = admin_url( 'site-editor.php?postType=wp_block&postId=' . $pat_post->ID . '&canvas=edit' );
+									?>
+									<option value="<?= $pat_post->ID ?>"
+									        data-edit-url="<?= esc_url( $eu ) ?>"
+									        <?= selected( $feat_pid, $pat_post->ID, false ) ?>><?= esc_html( $pat_post->post_title ) ?></option>
+									<?php endforeach; ?>
+								</select>
+								<a href="<?= esc_url( $eu_active ?: '#' ) ?>"
+								   target="_blank"
+								   class="skate-featured-edit-link"
+								   <?= $eu_active ? '' : 'hidden' ?>>Edit in Site Editor &#8599;</a>
+								<?php else : ?>
+								<span style="font-size:12px;color:#8c8f94;">No patterns in <em>Menu Featured Column</em> yet.</span>
+								<?php endif; ?>
+								<div class="skate-featured-bg-row">
+									<label class="skate-featured-bg-label">BG Color</label>
+									<input type="color" class="skate-featured-bg-color" name="skate_nav_featured_bg_color[<?= $li ?>][<?= $fci_r ?>]" value="<?= esc_attr( $feat_bg_color ?: '#F2F4F6' ) ?>">
+									<input type="text" class="skate-featured-bg-hex" value="<?= esc_attr( $feat_bg_color ?: '#F2F4F6' ) ?>" maxlength="7" placeholder="#rrggbb">
+								</div>
+							</div>
+						</div>
+						<?php else :
+							$ci_r    = $rcol['ci'];
+							$col     = $rcol['col'];
+							$next_gi = count( $col['groups'] ?? [] );
+						?>
+						<div class="skate-sub-col-card is-collapsed" data-ci="<?= $ci_r ?>" draggable="true">
+							<div class="skate-sub-col-card-head">
+								<span class="skate-col-drag-handle" title="Drag to reorder">⠿</span>
+								<span class="skate-sub-col-label">Column <?= $ci_r + 1 ?></span>
+								<button type="button" class="skate-col-collapse" title="Toggle"><?= $chevron_svg ?></button>
+								<button type="button" class="skate-nb-remove" data-cls="skate-sub-col-card" title="Remove column"><?= $close_svg ?></button>
+							</div>
+							<div class="skate-sub-col-card-body">
+								<div class="skate-sub-groups-wrap" id="skate-sub-groups-<?= $li ?>-<?= $ci_r ?>" data-li="<?= $li ?>" data-ci="<?= $ci_r ?>" data-next-gi="<?= $next_gi ?>">
+									<?php foreach ( ( $col['groups'] ?? [] ) as $gi => $grp ) : ?>
+									<div class="skate-sub-group-card">
+										<div class="skate-sub-group-head">
+											<input type="text"
+												name="skate_nav_col_group_title[<?= $li ?>][<?= $ci_r ?>][<?= $gi ?>]"
+												value="<?= esc_attr( $grp['title'] ?? '' ) ?>"
+												placeholder="Group title">
+											<button type="button" class="button skate-nb-remove" data-cls="skate-sub-group-card" title="Remove group">✕</button>
+										</div>
+										<div class="skate-sub-col-links" data-li="<?= $li ?>" data-ci="<?= $ci_r ?>" data-gi="<?= $gi ?>">
+											<?php foreach ( ( $grp['links'] ?? [] ) as $cl ) : ?>
+											<div class="skate-sub-link-row" draggable="true">
+												<span class="skate-link-drag-handle" title="Drag to reorder">⠿</span>
+												<?php if ( $sub_icon_mode_opt === 'custom' ) : ?>
+												<div class="skate-nb-svg-wrap skate-sub-link-icon-wrap">
+													<div class="skate-nb-svg-preview"><?= $cl['icon_svg'] ?? '' // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+													<textarea name="skate_nav_col_link_svg[<?= $li ?>][<?= $ci_r ?>][<?= $gi ?>][]" rows="2" placeholder="SVG"><?= esc_textarea( $cl['icon_svg'] ?? '' ) ?></textarea>
+												</div>
+												<?php else : ?>
+												<input type="hidden" name="skate_nav_col_link_svg[<?= $li ?>][<?= $ci_r ?>][<?= $gi ?>][]" value="<?= esc_attr( $cl['icon_svg'] ?? '' ) ?>">
+												<?php endif; ?>
+												<input type="text"
+													name="skate_nav_col_link_title[<?= $li ?>][<?= $ci_r ?>][<?= $gi ?>][]"
+													value="<?= esc_attr( $cl['title'] ?? '' ) ?>"
+													placeholder="Label" style="width:130px;">
+												<?= $skate_url_picker(
+													'skate_nav_col_link_url[' . $li . '][' . $ci_r . '][' . $gi . '][]',
+													'skate_nav_col_link_pid[' . $li . '][' . $ci_r . '][' . $gi . '][]',
+													$cl['url'] ?? '',
+													(int) ( $cl['page_id'] ?? 0 )
+												) ?>
+												<input type="text"
+													name="skate_nav_col_link_anchor[<?= $li ?>][<?= $ci_r ?>][<?= $gi ?>][]"
+													value="<?= esc_attr( $cl['anchor'] ?? '' ) ?>"
+													placeholder="#anchor" style="width:90px;" title="Anchor (e.g. section-id, without #)">
+												<button type="button" class="button skate-nb-remove" data-cls="skate-sub-link-row">✕</button>
+											</div>
+											<?php endforeach; ?>
+										</div>
+										<div class="skate-sub-add-link-row">
+											<button type="button" class="button skate-add-col-link" data-li="<?= $li ?>" data-ci="<?= $ci_r ?>" data-gi="<?= $gi ?>">+ Add link</button>
+										</div>
+									</div>
+									<?php endforeach; ?>
+								</div>
+								<div class="skate-sub-add-group-row">
+									<button type="button" class="button skate-add-group" data-li="<?= $li ?>" data-ci="<?= $ci_r ?>">+ Add group</button>
+								</div>
+							</div>
+						</div>
+						<?php endif; ?>
+						<?php endforeach; ?>
+
+						<template id="skate-feat-tpl-<?= $li ?>">
+							<option value="0">— None —</option>
+							<?php foreach ( $menu_patterns as $pat_post ) :
+								$eu = admin_url( 'site-editor.php?postType=wp_block&postId=' . $pat_post->ID . '&canvas=edit' );
+							?>
+							<option value="<?= $pat_post->ID ?>" data-edit-url="<?= esc_url( $eu ) ?>"><?= esc_html( $pat_post->post_title ) ?></option>
+							<?php endforeach; ?>
+						</template>
+					</div>
+					<div style="padding:0 16px 16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+						<button type="button" class="button skate-add-column" data-li="<?= $li ?>">+ Add column</button>
+						<button type="button" class="button skate-add-featured-col" data-li="<?= $li ?>">+ Add featured column</button>
+						<span style="font-size:12px;color:#8c8f94;">Featured columns use patterns from the <strong>Menu Featured Column</strong> category.</span>
+					</div>
+				</div>
+				<?php endforeach; ?>
+
+				<?php endif; ?>
+
+				<!-- SECTION: Hamburger Menu submenu -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Hamburger Menu</h2>
+						<p class="skate-tune-desc">Columns and links shown when the hamburger button is clicked.</p>
+					</div>
+					<?php
+					$hbg_li = 'hbg';
+					$hbg_all_cols = $hbg_columns_opt;
+					$hbg_ci = 0; $hbg_fci = 0;
+					$hbg_order_arr   = [];
+					$hbg_render_cols = [];
+					foreach ( $hbg_all_cols as $col ) {
+						if ( ( $col['type'] ?? 'regular' ) === 'featured' ) {
+							$hbg_order_arr[]   = [ 'type' => 'featured', 'fci' => $hbg_fci ];
+							$hbg_render_cols[] = [ 'type' => 'featured', 'fci' => $hbg_fci, 'post_id' => (int) ( $col['post_id'] ?? 0 ), 'bg_color' => $col['bg_color'] ?? '' ];
+							$hbg_fci++;
+						} else {
+							$hbg_order_arr[]   = [ 'type' => 'regular', 'ci' => $hbg_ci ];
+							$hbg_render_cols[] = [ 'type' => 'regular', 'ci' => $hbg_ci, 'col' => $col ];
+							$hbg_ci++;
+						}
+					}
+					$chevron_svg = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+					$close_svg   = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+					?>
+					<input type="hidden" name="skate_nav_col_order[<?= $hbg_li ?>]" class="skate-col-order-input" value="<?= esc_attr( wp_json_encode( $hbg_order_arr ) ) ?>">
+					<div class="skate-sub-col-wrap" id="skate-sub-col-wrap-<?= $hbg_li ?>" data-li="<?= $hbg_li ?>" data-next-ci="<?= $hbg_ci ?>" data-next-fci="<?= $hbg_fci ?>">
+						<?php foreach ( $hbg_render_cols as $rcol ) :
+							if ( $rcol['type'] === 'featured' ) :
+								$fci_r         = $rcol['fci'];
+								$feat_pid      = $rcol['post_id'];
+								$feat_bg_color = $rcol['bg_color'] ?? '';
+								$eu_active     = $feat_pid ? admin_url( 'site-editor.php?postType=wp_block&postId=' . $feat_pid . '&canvas=edit' ) : '';
+						?>
+						<div class="skate-sub-col-card skate-featured-col-card is-collapsed" data-fci="<?= $fci_r ?>" draggable="true">
+							<div class="skate-sub-col-card-head">
+								<span class="skate-col-drag-handle" title="Drag to reorder">⠿</span>
+								<span class="skate-sub-col-label">Featured</span>
+								<button type="button" class="skate-col-collapse" title="Toggle"><?= $chevron_svg ?></button>
+								<button type="button" class="skate-featured-col-remove" title="Remove"><?= $close_svg ?></button>
+							</div>
+							<div class="skate-featured-col-body">
+								<?php if ( $menu_patterns ) : ?>
+								<select name="skate_nav_featured_post_id[<?= $hbg_li ?>][<?= $fci_r ?>]" class="skate-featured-select">
+									<option value="0">— None —</option>
+									<?php foreach ( $menu_patterns as $pat_post ) :
+										$eu = admin_url( 'site-editor.php?postType=wp_block&postId=' . $pat_post->ID . '&canvas=edit' );
+									?>
+									<option value="<?= $pat_post->ID ?>" data-edit-url="<?= esc_url( $eu ) ?>"<?= selected( $feat_pid, $pat_post->ID, false ) ?>><?= esc_html( $pat_post->post_title ) ?></option>
+									<?php endforeach; ?>
+								</select>
+								<a href="<?= esc_url( $eu_active ?: '#' ) ?>" target="_blank" class="skate-featured-edit-link"<?= $eu_active ? '' : ' hidden' ?>>Edit in Site Editor &#8599;</a>
+								<?php else : ?>
+								<span style="font-size:12px;color:#8c8f94;">No patterns in <em>Menu Featured Column</em> yet.</span>
+								<?php endif; ?>
+								<div class="skate-featured-bg-row">
+									<label class="skate-featured-bg-label">BG Color</label>
+									<input type="color" class="skate-featured-bg-color" name="skate_nav_featured_bg_color[<?= $hbg_li ?>][<?= $fci_r ?>]" value="<?= esc_attr( $feat_bg_color ?: '#F2F4F6' ) ?>">
+									<input type="text" class="skate-featured-bg-hex" value="<?= esc_attr( $feat_bg_color ?: '#F2F4F6' ) ?>" maxlength="7" placeholder="#rrggbb">
+								</div>
+							</div>
+						</div>
+						<?php else :
+							$ci_r    = $rcol['ci'];
+							$col     = $rcol['col'];
+							$next_gi = count( $col['groups'] ?? [] );
+						?>
+						<div class="skate-sub-col-card is-collapsed" data-ci="<?= $ci_r ?>" draggable="true">
+							<div class="skate-sub-col-card-head">
+								<span class="skate-col-drag-handle" title="Drag to reorder">⠿</span>
+								<span class="skate-sub-col-label">Column <?= $ci_r + 1 ?></span>
+								<button type="button" class="skate-col-collapse" title="Toggle"><?= $chevron_svg ?></button>
+								<button type="button" class="skate-nb-remove" data-cls="skate-sub-col-card" title="Remove column"><?= $close_svg ?></button>
+							</div>
+							<div class="skate-sub-col-card-body">
+								<div class="skate-sub-groups-wrap" id="skate-sub-groups-<?= $hbg_li ?>-<?= $ci_r ?>" data-li="<?= $hbg_li ?>" data-ci="<?= $ci_r ?>" data-next-gi="<?= $next_gi ?>">
+									<?php foreach ( ( $col['groups'] ?? [] ) as $gi => $grp ) : ?>
+									<div class="skate-sub-group-card">
+										<div class="skate-sub-group-head">
+											<input type="text" name="skate_nav_col_group_title[<?= $hbg_li ?>][<?= $ci_r ?>][<?= $gi ?>]" value="<?= esc_attr( $grp['title'] ?? '' ) ?>" placeholder="Group title">
+											<button type="button" class="button skate-nb-remove" data-cls="skate-sub-group-card" title="Remove group">✕</button>
+										</div>
+										<div class="skate-sub-col-links" data-li="<?= $hbg_li ?>" data-ci="<?= $ci_r ?>" data-gi="<?= $gi ?>">
+											<?php foreach ( ( $grp['links'] ?? [] ) as $cl ) : ?>
+											<div class="skate-sub-link-row" draggable="true">
+												<span class="skate-link-drag-handle" title="Drag to reorder">⠿</span>
+												<?php if ( $sub_icon_mode_opt === 'custom' ) : ?>
+												<div class="skate-nb-svg-wrap skate-sub-link-icon-wrap">
+													<div class="skate-nb-svg-preview"><?= $cl['icon_svg'] ?? '' // phpcs:ignore ?></div>
+													<textarea name="skate_nav_col_link_svg[<?= $hbg_li ?>][<?= $ci_r ?>][<?= $gi ?>][]" rows="2" placeholder="SVG"><?= esc_textarea( $cl['icon_svg'] ?? '' ) ?></textarea>
+												</div>
+												<?php else : ?>
+												<input type="hidden" name="skate_nav_col_link_svg[<?= $hbg_li ?>][<?= $ci_r ?>][<?= $gi ?>][]" value="<?= esc_attr( $cl['icon_svg'] ?? '' ) ?>">
+												<?php endif; ?>
+												<input type="text" name="skate_nav_col_link_title[<?= $hbg_li ?>][<?= $ci_r ?>][<?= $gi ?>][]" value="<?= esc_attr( $cl['title'] ?? '' ) ?>" placeholder="Label" style="width:130px;">
+												<?= $skate_url_picker(
+													'skate_nav_col_link_url[' . $hbg_li . '][' . $ci_r . '][' . $gi . '][]',
+													'skate_nav_col_link_pid[' . $hbg_li . '][' . $ci_r . '][' . $gi . '][]',
+													$cl['url'] ?? '',
+													(int) ( $cl['page_id'] ?? 0 )
+												) ?>
+												<input type="text" name="skate_nav_col_link_anchor[<?= $hbg_li ?>][<?= $ci_r ?>][<?= $gi ?>][]" value="<?= esc_attr( $cl['anchor'] ?? '' ) ?>" placeholder="#anchor" style="width:90px;" title="Anchor (e.g. section-id, without #)">
+												<button type="button" class="button skate-nb-remove" data-cls="skate-sub-link-row">✕</button>
+											</div>
+											<?php endforeach; ?>
+										</div>
+										<div class="skate-sub-add-link-row">
+											<button type="button" class="button skate-add-col-link" data-li="<?= $hbg_li ?>" data-ci="<?= $ci_r ?>" data-gi="<?= $gi ?>">+ Add link</button>
+										</div>
+									</div>
+									<?php endforeach; ?>
+								</div>
+								<div class="skate-sub-add-group-row">
+									<button type="button" class="button skate-add-group" data-li="<?= $hbg_li ?>" data-ci="<?= $ci_r ?>">+ Add group</button>
+								</div>
+							</div>
+						</div>
+						<?php endif; ?>
+						<?php endforeach; ?>
+
+						<template id="skate-feat-tpl-<?= $hbg_li ?>">
+							<option value="0">— None —</option>
+							<?php foreach ( $menu_patterns as $pat_post ) :
+								$eu = admin_url( 'site-editor.php?postType=wp_block&postId=' . $pat_post->ID . '&canvas=edit' );
+							?>
+							<option value="<?= $pat_post->ID ?>" data-edit-url="<?= esc_url( $eu ) ?>"><?= esc_html( $pat_post->post_title ) ?></option>
+							<?php endforeach; ?>
+						</template>
+					</div>
+					<div style="padding:0 16px 16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+						<button type="button" class="button skate-add-column" data-li="<?= $hbg_li ?>">+ Add column</button>
+						<button type="button" class="button skate-add-featured-col" data-li="<?= $hbg_li ?>">+ Add featured column</button>
+						<span style="font-size:12px;color:#8c8f94;">Featured columns use patterns from the <strong>Menu Featured Column</strong> category.</span>
+					</div>
+				</div>
+
+			</div><!-- /.skate-submenus-main -->
+
+			<!-- ── Right sidebar: icon settings ── -->
+			<div class="skate-submenus-sidebar">
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Fine Tuning</h2>
+					</div>
+					<!-- Submenu font size -->
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Font size</label>
+						<div class="skate-tune-control">
+							<div class="skate-icon-mode-cards">
+								<?php
+								$sfs_options = [
+									'small'  => 'S',
+									'medium' => 'M',
+									'large'  => 'L',
+								];
+								foreach ( $sfs_options as $sfs_val => $sfs_label ) : ?>
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_submenu_font_size" value="<?= esc_attr( $sfs_val ) ?>"<?= checked( $submenu_font_size_opt, $sfs_val, false ) ?>>
+									<span><?= esc_html( $sfs_label ) ?></span>
+								</label>
+								<?php endforeach; ?>
+							</div>
+							<p class="description" style="margin-top:6px;">Applies to group titles and links.</p>
+						</div>
+					</div>
+
+					<!-- Text transform -->
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Text</label>
+						<div class="skate-tune-control">
+							<div class="skate-icon-mode-cards">
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_submenu_text" value="inherit"<?= checked( $submenu_text_opt, 'inherit', false ) ?>>
+									<span>Inherit</span>
+								</label>
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_submenu_text" value="uppercase"<?= checked( $submenu_text_opt, 'uppercase', false ) ?>>
+									<span>Mayus</span>
+								</label>
+							</div>
+							<p class="description" style="margin-top:6px;">Text transform for titles and links.</p>
+						</div>
+					</div>
+
+					<!-- Row gap -->
+					<div class="skate-tune-row">
+						<label class="skate-tune-label">Row gap</label>
+						<div class="skate-tune-control">
+							<div class="skate-icon-mode-cards">
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_submenu_gap" value="s"<?= checked( $submenu_gap_opt, 's', false ) ?>>
+									<span>S</span>
+								</label>
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_submenu_gap" value="m"<?= checked( $submenu_gap_opt, 'm', false ) ?>>
+									<span>M</span>
+								</label>
+								<label class="skate-icon-mode-card">
+									<input type="radio" name="skate_navbar_submenu_gap" value="l"<?= checked( $submenu_gap_opt, 'l', false ) ?>>
+									<span>L</span>
+								</label>
+							</div>
+							<p class="description" style="margin-top:6px;">Vertical spacing between links.</p>
+						</div>
+					</div>
+					<p class="skate-tune-hint" style="margin-top:4px;padding:10px 14px 14px;">To apply Font size to a featured column heading, add the CSS class <code>pace-submenu-featured-title</code> to it in the Site Editor (Block → Advanced → Additional CSS class).</p>
+				</div>
+
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Link Icons</h2>
+						<p class="skate-tune-desc">Icon style for submenu column links.</p>
+					</div>
+					<div style="padding:12px 16px 16px; display:flex; flex-direction:column; gap:12px;">
+						<!-- Mode picker -->
+						<div class="skate-icon-mode-cards">
+							<?php
+							$icon_modes = [
+								'none'   => [ 'label' => 'None',    'desc' => 'No icons' ],
+								'arrow'  => [ 'label' => 'Arrow',   'desc' => '› prefix (CSS)' ],
+								'default'=> [ 'label' => 'Default', 'desc' => 'One SVG for all' ],
+								'custom' => [ 'label' => 'Custom',  'desc' => 'Per-link SVG' ],
+							];
+							foreach ( $icon_modes as $mode_key => $mode ) : ?>
+							<label class="skate-icon-mode-card">
+								<input type="radio" name="skate_navbar_submenu_icon_mode" value="<?= $mode_key ?>"<?= checked( $sub_icon_mode_opt, $mode_key, false ) ?>>
+								<span><?= esc_html( $mode['label'] ) ?></span>
+							</label>
+							<?php endforeach; ?>
+						</div>
+						<!-- Default SVG field -->
+						<div class="skate-icon-default-wrap"<?= $sub_icon_mode_opt !== 'default' ? ' hidden' : '' ?>>
+							<label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;">Default icon SVG</label>
+							<div class="skate-nb-svg-wrap">
+								<div class="skate-nb-svg-preview"><?= $sub_icon_default_svg_opt // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+								<textarea name="skate_navbar_submenu_icon_default_svg" rows="4" placeholder="<svg>…</svg>"><?= esc_textarea( $sub_icon_default_svg_opt ) ?></textarea>
+							</div>
+						</div>
+						<?php if ( $sub_icon_mode_opt === 'custom' ) : ?>
+						<p style="font-size:12px;color:#8c8f94;margin:0;">SVG fields appear on each link in the columns.</p>
+						<?php endif; ?>
+					</div>
+				</div>
+				<!-- Close Button -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head" style="display:flex;align-items:center;justify-content:space-between;">
+						<div>
+							<h2 class="skate-tune-title">Close Button</h2>
+							<p class="skate-tune-desc">Show an × button inside the submenu panel.</p>
+						</div>
+						<label class="skate-toggle" title="Enable / Disable">
+							<input type="checkbox" name="skate_navbar_submenu_close" value="1"<?= get_option( 'skate_navbar_submenu_close' ) ? ' checked' : '' ?>>
+							<span class="skate-toggle-track"></span>
+						</label>
+					</div>
+				</div>
+				<!-- Column Backgrounds -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Column Backgrounds</h2>
+						<p class="skate-tune-desc">Subtle tint per column — first is most opaque.</p>
+					</div>
+					<div style="padding:12px 16px 16px;">
+						<div class="skate-icon-mode-cards">
+							<?php
+							$col_bg_options = [
+								'none'      => [ 'label' => 'None',      'desc' => 'Transparent' ],
+								'grey'      => [ 'label' => 'Greys',     'desc' => 'Neutral tones' ],
+								'primary'   => [ 'label' => 'Primary',   'desc' => 'Main color' ],
+								'secondary' => [ 'label' => 'Secondary', 'desc' => 'Brand accent' ],
+							];
+							foreach ( $col_bg_options as $bg_key => $bg ) : ?>
+							<label class="skate-icon-mode-card">
+								<input type="radio" name="skate_navbar_col_bg_preset" value="<?= $bg_key ?>"<?= checked( $col_bg_preset_opt, $bg_key, false ) ?>>
+								<span><?= esc_html( $bg['label'] ) ?></span>
+							</label>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				</div>
+				<!-- Presets -->
+				<div class="skate-tune-section">
+					<div class="skate-tune-head">
+						<h2 class="skate-tune-title">Presets</h2>
+						<p class="skate-tune-desc">Save and restore named configurations.</p>
+					</div>
+					<div class="skate-presets-body">
+						<div class="skate-preset-save-row">
+							<input type="text" name="skate_navbar_preset_name" class="skate-preset-name-input" placeholder="Preset name…">
+							<button type="submit" name="skate_navbar_save_named_preset" value="1" class="button skate-preset-save-btn">Save</button>
+						</div>
+						<input type="hidden" name="skate_navbar_preset_id" value="">
+						<input type="hidden" name="skate_navbar_import_json" id="skate-import-json-data" value="">
+						<?php if ( $presets ) : ?>
+						<ul class="skate-preset-list">
+							<?php foreach ( array_reverse( $presets ) as $preset ) :
+								$pid   = esc_js( $preset['id'] );
+								$pname = esc_js( $preset['name'] );
+							?>
+							<li class="skate-preset-item">
+								<span class="skate-preset-item-name"><?= esc_html( $preset['name'] ) ?></span>
+								<span class="skate-preset-item-date"><?= esc_html( wp_date( 'j M Y', (int) $preset['saved_at'] ) ) ?></span>
+								<button type="submit" name="skate_navbar_load_named_preset" value="1" class="skate-preset-action skate-preset-load"
+									onclick="document.querySelector('[name=skate_navbar_preset_id]').value='<?= $pid ?>'; return confirm('Load «<?= $pname ?>»? This overwrites all current settings.');"
+									title="Load">
+									<svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 1v7M2 5.5l3.5 3.5 3.5-3.5M1 10h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+								</button>
+								<button type="submit" name="skate_navbar_delete_preset" value="1" class="skate-preset-action skate-preset-delete"
+									onclick="document.querySelector('[name=skate_navbar_preset_id]').value='<?= $pid ?>'; return confirm('Delete «<?= $pname ?>»?');"
+									title="Delete">
+									<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+								</button>
+							</li>
+							<?php endforeach; ?>
+						</ul>
+						<?php else : ?>
+						<p class="skate-preset-empty">No presets saved yet.</p>
+						<?php endif; ?>
+						<!-- Export / Import -->
+						<div class="skate-preset-transfer">
+							<a href="<?= esc_url( wp_nonce_url( admin_url( 'admin.php?page=skate-navbar&skate_export_presets=1' ), 'skate_export_presets' ) ) ?>"
+								class="button skate-preset-transfer-btn"
+								<?= empty( $presets ) ? 'disabled aria-disabled="true"' : '' ?>>
+								<svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 1v7M2 5.5l3.5 3.5 3.5-3.5M1 10h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+								Export
+							</a>
+							<label class="button skate-preset-transfer-btn skate-preset-import-label" title="Import presets from JSON file">
+								<svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 10V3M2 5.5L5.5 2l3.5 3.5M1 1h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+								Import
+								<input type="file" id="skate-import-file-picker" accept=".json" hidden>
+							</label>
+							<button type="submit" name="skate_navbar_import_presets" value="1" id="skate-import-submit-btn" class="button button-primary skate-preset-import-submit" hidden>
+								Confirm import
+							</button>
+						</div>
+					</div>
+				</div>
+				<!-- Save (bottom) -->
+				<div class="skate-sidebar-actions">
+					<input type="submit" class="button-primary" value="Save" style="width:100%;">
+				</div>
+			</div><!-- /.skate-submenus-sidebar -->
+
+			</div><!-- /.skate-submenus-layout -->
+			</div><!-- /#skate-tab-submenus -->
+
+		</form>
+	</div>
+
+	<style>
+	/* ── Base layout (mirrors site-identity.php) ── */
+	.skate-identity-wrap { max-width: none; }
+	/* ── Submenus 70/30 layout ── */
+	.skate-submenus-layout {
+		display: flex;
+		align-items: flex-start;
+		gap: 20px;
+		padding: 0;
+	}
+	.skate-submenus-main { flex: 7; min-width: 0; }
+	.skate-submenus-sidebar { flex: 3; min-width: 220px; position: sticky; top: 32px; }
+	/* ── Icon mode card picker ── */
+	.skate-icon-mode-cards { display: flex; background: #f0f0f1; border-radius: 20px; padding: 3px; gap: 0; }
+	.skate-icon-mode-card { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+	.skate-icon-mode-card input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+	.skate-icon-mode-card span { display: block; padding: 4px 6px; font-size: 12px; font-weight: 600; color: #8c8f94; text-align: center; width: 100%; border-radius: 16px; transition: color .15s, background .15s; user-select: none; white-space: nowrap; }
+	.skate-icon-mode-card input:checked + span { background: var(--skate-accent); color: #fff; box-shadow: 0 1px 4px var(--skate-accent-glow); }
+	.skate-tab-main-actions {
+		display: flex;
+		gap: 8px;
+		padding: 16px 0 8px;
+	}
+	/* ── Presets panel ── */
+	.skate-presets-body { padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+	.skate-preset-save-row { display: flex; gap: 6px; }
+	.skate-preset-name-input { flex: 1; min-width: 0; font-size: 12px !important; height: 30px !important; }
+	.skate-preset-save-btn { flex-shrink: 0; height: 30px; line-height: 28px; padding: 0 10px; font-size: 12px; }
+	.skate-preset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+	.skate-preset-item { display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: #f0f0f1; border-radius: 6px; }
+	.skate-preset-item-name { font-size: 12px; font-weight: 600; color: #1d2327; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.skate-preset-item-date { font-size: 11px; color: #8c8f94; white-space: nowrap; flex-shrink: 0; }
+	.skate-preset-action { background: none; border: none; cursor: pointer; color: #8c8f94; padding: 0; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; flex-shrink: 0; transition: background .15s, color .15s; }
+	.skate-preset-load:hover { background: rgba(0,0,0,.07); color: #1d2327; }
+	.skate-preset-delete:hover { background: rgba(179,45,46,.1); color: #b32d2e; }
+	.skate-preset-empty { font-size: 12px; color: #8c8f94; margin: 0; text-align: center; padding: 6px 0; }
+	.skate-preset-transfer { display: flex; gap: 6px; flex-wrap: wrap; }
+	.skate-preset-transfer-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; height: 28px; line-height: 26px; padding: 0 10px; }
+	.skate-preset-transfer-btn[disabled] { opacity: .4; pointer-events: none; }
+	.skate-preset-import-label { cursor: pointer; }
+	.skate-preset-import-submit { flex-shrink: 0; }
+	.skate-sidebar-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin-top: 12px;
+	}
+	.skate-tune-section {
+		background: #fff;
+		border: 1px solid #c3c4c7;
+		border-radius: 10px;
+		overflow: hidden;
+		margin-bottom: 20px;
+	}
+	.skate-tune-head {
+		padding: 16px 24px 14px;
+		border-bottom: 1px solid #f0f0f1;
+	}
+	.skate-tune-title {
+		margin: 0 0 2px;
+		font-size: 10px;
+		font-weight: 700;
+		color: #1d2327;
+		text-transform: uppercase;
+		letter-spacing: .1em;
+	}
+	.skate-tune-desc { margin: 0; font-size: 12px; color: #8c8f94; }
+	.skate-tune-row {
+		display: grid;
+		grid-template-columns: 148px 1fr;
+		gap: 8px 20px;
+		align-items: center;
+		padding: 13px 24px;
+		border-top: 1px solid #f4f4f5;
+	}
+	.skate-tune-label { font-size: 13px; font-weight: 500; color: #1d2327; padding-top: 2px; }
+	.skate-tune-control { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+	/* ── Variant cards ── */
+	.skate-variant-cards { display: flex; gap: 12px; flex-wrap: wrap; padding: 4px 0; }
+	.skate-variant-card {
+		display: flex; flex-direction: column; align-items: center; gap: 8px;
+		background: #fff; border: 2px solid #dcdcde; border-radius: 10px;
+		padding: 10px 10px 8px; cursor: pointer; width: 88px;
+		transition: border-color .15s, box-shadow .15s;
+	}
+	.skate-variant-card:hover { border-color: var(--skate-accent); }
+	.skate-variant-card.is-active { border-color: var(--skate-accent); box-shadow: 0 0 0 3px var(--skate-accent-glow); }
+	.skate-variant-preview {
+		width: 68px; height: 50px; border-radius: 5px; overflow: hidden;
+		background: #f2f4f6; display: flex; flex-direction: column; flex-shrink: 0;
+	}
+	.skate-variant-name { font-size: 11px; font-weight: 600; color: #1d2327; white-space: nowrap; }
+	/* mini bar */
+	.pvp-bar {
+		display: flex; align-items: center; gap: 3px; padding: 0 5px;
+		height: 13px; flex-shrink: 0;
+	}
+	.pvp-logo  { width: 11px; height: 5px; border-radius: 1px; background: #17263a; flex-shrink: 0; }
+	.pvp-links { display: flex; gap: 2px; flex: 1; align-items: center; }
+	.pvp-link  { height: 3px; background: #17263a; border-radius: 1px; opacity: .35; }
+	.pvp-link:nth-child(1) { width: 9px; }
+	.pvp-link:nth-child(2) { width: 7px; }
+	.pvp-link:nth-child(3) { width: 9px; }
+	.pvp-btn   { width: 11px; height: 5px; border-radius: 1px; background: #d6b36d; flex-shrink: 0; }
+	/* mini content */
+	.pvp-content { flex: 1; padding: 5px 5px; display: flex; flex-direction: column; gap: 3px; justify-content: center; }
+	.pvp-line  { height: 3px; background: rgba(0,0,0,.1); border-radius: 1px; }
+	.pvp-line--short { width: 55%; }
+	/* Standard */
+	.skate-variant-preview--standard .pvp-bar { background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
+	/* Transparent */
+	.skate-variant-preview--transparent { background: linear-gradient(140deg, #17263a 0%, #2e5073 100%); }
+	.skate-variant-preview--transparent .pvp-bar { background: transparent; }
+	.skate-variant-preview--transparent .pvp-logo { background: #fff; }
+	.skate-variant-preview--transparent .pvp-link { background: #fff; opacity: .55; }
+	.skate-variant-preview--transparent .pvp-btn  { background: #d6b36d; }
+	.skate-variant-preview--transparent .pvp-line { background: rgba(255,255,255,.18); }
+	/* Compact */
+	.skate-variant-preview--compact .pvp-bar { background: #fff; height: 9px; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
+	.skate-variant-preview--compact .pvp-logo { height: 4px; }
+	.skate-variant-preview--compact .pvp-btn  { height: 4px; }
+	.skate-variant-preview--compact .pvp-link { height: 2px; }
+	/* Centered */
+	.skate-variant-preview--centered .pvp-bar { background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.08); justify-content: space-between; }
+	.skate-variant-preview--centered .pvp-bar .pvp-links { flex: 0 0 auto; }
+	.skate-variant-preview--centered .pvp-bar .pvp-logo  { position: absolute; left: 50%; transform: translateX(-50%); }
+	.skate-variant-preview--centered .pvp-bar { position: relative; }
+	/* Dark */
+	.skate-variant-preview--dark .pvp-bar { background: #17263a; }
+	.skate-variant-preview--dark .pvp-logo { background: #fff; }
+	.skate-variant-preview--dark .pvp-link { background: #fff; opacity: .45; }
+	.skate-variant-preview--dark .pvp-btn  { background: #d6b36d; }
+
+	/* ── Tabs ── */
+	.skate-tune-tabs {
+		display: flex;
+		gap: 0;
+		margin-bottom: 20px;
+		border-bottom: 2px solid #dcdcde;
+	}
+	.skate-tune-tab {
+		display: inline-flex;
+		align-items: center;
+		padding: 10px 20px;
+		text-decoration: none;
+		color: #50575e;
+		font-weight: 500;
+		font-size: 14px;
+		border-bottom: 2px solid transparent;
+		margin-bottom: -2px;
+		transition: color .15s, border-color .15s;
+	}
+	.skate-tune-tab.is-active { color: var(--skate-accent); border-bottom-color: var(--skate-accent); font-weight: 600; }
+	.skate-tune-tab:hover:not(.is-active) { color: #1d2327; }
+
+	/* ── Drag handle ── */
+	.skate-social-drag-handle {
+		cursor: grab; color: #c5c8cc; font-size: 15px; flex-shrink: 0;
+		padding: 0 2px; border-radius: 3px; user-select: none; line-height: 1;
+	}
+	.skate-social-drag-handle:hover { color: #50575e; }
+
+	/* ── Repeater containers ── */
+	.skate-nb-repeater { padding: 16px 24px 8px; }
+	.skate-nb-add-row  { padding: 0 24px 16px; }
+
+	/* ── Link / Button / Icon rows ── */
+	.skate-nav-link-row,
+	.skate-nav-btn-row,
+	.skate-nav-icon-row {
+		background: #f9f9f9;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		padding: 10px 14px;
+		margin-bottom: 8px;
+	}
+	.skate-nav-link-row,
+	.skate-nav-btn-row,
+	.skate-nav-icon-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	/* ── Submenu rows ── */
+	.skate-nav-sub-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 10px 12px;
+		background: #f9f9f9;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		margin-bottom: 8px;
+		flex-wrap: wrap;
+	}
+
+	/* ── SVG field ── */
+	.skate-nb-svg-wrap {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+	}
+	.skate-nb-svg-wrap textarea {
+		width: 100px;
+		font-family: monospace;
+		font-size: 10px;
+		resize: vertical;
+		border-radius: 3px;
+	}
+	.skate-nb-svg-preview {
+		width: 36px;
+		height: 36px;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #fff;
+	}
+	.skate-nb-svg-preview svg { width: 26px; height: 26px; }
+
+	/* ── Remove button ── */
+	.skate-nb-remove.button {
+		flex-shrink: 0;
+		color: #b32d2e;
+		border-color: transparent;
+		background: none;
+		box-shadow: none;
+		padding: 0 6px;
+	}
+	.skate-nb-remove.button:hover { background: #fdf0f0; border-color: #b32d2e; }
+
+	/* ── Page picker ── */
+	.skate-url-wrap { display: flex; flex-direction: column; gap: 3px; }
+	/* Toggle switch */
+	.skate-toggle { display:flex; align-items:center; gap:6px; cursor:pointer; flex-shrink:0; }
+	.skate-toggle input { position:absolute; opacity:0; width:0; height:0; }
+	.skate-toggle-track {
+		display:inline-block; width:36px; height:20px; border-radius:10px;
+		background:#ccc; transition:background .2s; position:relative;
+	}
+	.skate-toggle-track::after {
+		content:""; position:absolute; top:3px; left:3px;
+		width:14px; height:14px; border-radius:50%; background:#fff;
+		transition:transform .2s;
+	}
+	.skate-toggle input:checked + .skate-toggle-track { background:var(--skate-accent); }
+	.skate-toggle input:checked + .skate-toggle-track::after { transform:translateX(16px); }
+	.skate-url-unresolved {
+		display: flex; align-items: center; gap: 5px;
+		font-size: 11px; padding: 3px 8px; border-radius: 3px;
+		background: #fff0f0; color: #c0392b; border-left: 3px solid #c0392b;
+	}
+	.skate-pp-row   { display: flex; align-items: center; gap: 4px; }
+	.skate-url-input { flex: 1; }
+	.skate-pp-wrap  { position: relative; flex-shrink: 0; }
+	.skate-pp-open.button { padding: 0 8px; height: 28px; font-size: 12px; font-weight: 500; color: #50575e; }
+	.skate-pp-panel {
+		position: fixed; z-index: 99999;
+		background: #fff; border: 1px solid #c3c4c7; border-radius: 6px;
+		box-shadow: 0 4px 20px rgba(0,0,0,.14); width: 260px; padding: 8px;
+	}
+	.skate-pp-filter { width: 100%; box-sizing: border-box; margin-bottom: 6px; }
+	.skate-pp-results { max-height: 180px; overflow-y: auto; }
+	.skate-pp-result {
+		padding: 5px 8px; cursor: pointer; border-radius: 4px;
+		font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+		color: #1d2327;
+	}
+	.skate-pp-result:hover { background: #f0f4ff; color: #1d6ae5; }
+	.skate-pp-empty { padding: 5px 8px; font-size: 12px; color: #8c8f94; font-style: italic; }
+	.skate-pid-linked {
+		display: flex; align-items: center; gap: 4px;
+		font-size: 11px; color: #0a5c27; background: #edfaf2;
+		border: 1px solid #b2dfc3; border-radius: 4px; padding: 2px 6px;
+	}
+	.skate-pid-linked[hidden] { display: none; }
+	.skate-pid-icon { font-size: 11px; }
+	.skate-pid-linked-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+	.skate-pid-unlink { border: none; background: none; cursor: pointer; color: #555; padding: 0 2px; font-size: 12px; line-height: 1; }
+	.skate-pid-unlink:hover { color: #b32d2e; }
+
+	/* ── Submenu column/group editor ── */
+	.skate-sub-col-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 16px;
+	}
+	.skate-sub-col-card {
+		background: #f0f0f1;
+		border-radius: 8px;
+		display: flex;
+		flex-direction: column;
+	}
+	.skate-sub-col-card-head {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 8px 10px;
+		border-radius: 8px;
+		cursor: pointer;
+		user-select: none;
+	}
+	.skate-sub-col-card:not(.is-collapsed) .skate-sub-col-card-head {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		border-bottom: 1px solid rgba(0,0,0,.08);
+	}
+	.skate-sub-col-card-body {
+		padding: 10px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	/* Collapsed state */
+	.skate-sub-col-card.is-collapsed .skate-sub-col-card-body,
+	.skate-sub-col-card.is-collapsed .skate-featured-col-body { display: none; }
+	/* Chevron toggle */
+	.skate-col-collapse {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #8c8f94;
+		font-size: 14px;
+		padding: 0;
+		line-height: 1;
+		margin-left: auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		border-radius: 4px;
+		transition: background .15s;
+		flex-shrink: 0;
+	}
+	.skate-col-collapse:hover { background: rgba(0,0,0,.07); color: #1d2327; }
+	.skate-col-collapse svg { transition: transform .18s; }
+	.skate-sub-col-card.is-collapsed .skate-col-collapse svg { transform: rotate(-90deg); }
+	/* Remove button */
+	.skate-sub-col-card-head .skate-nb-remove,
+	.skate-sub-col-card-head .skate-featured-col-remove {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #8c8f94;
+		font-size: 15px;
+		padding: 0;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		border-radius: 4px;
+		transition: background .15s, color .15s;
+		flex-shrink: 0;
+	}
+	.skate-sub-col-card-head .skate-nb-remove:hover,
+	.skate-sub-col-card-head .skate-featured-col-remove:hover { background: rgba(179,45,46,.1); color: #b32d2e; }
+	.skate-sub-col-label {
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: .07em;
+		color: #50575e;
+		flex: 1;
+	}
+	.skate-sub-groups-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	.skate-sub-group-card {
+		background: #fff;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		padding: 10px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.skate-sub-group-head {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.skate-sub-group-head > input[type="text"] {
+		flex: 1;
+		font-weight: 600;
+		box-sizing: border-box;
+	}
+	.skate-sub-add-group-row,
+	.skate-sub-add-link-row {
+		padding-top: 2px;
+	}
+
+	/* ── Column drag & drop ── */
+	.skate-col-drag-handle {
+		cursor: grab;
+		color: #bbb;
+		font-size: 15px;
+		padding-right: 6px;
+		user-select: none;
+		flex-shrink: 0;
+	}
+	.skate-col-drag-handle:active { cursor: grabbing; }
+	.skate-sub-col-card.is-dragging { opacity: .35; }
+	.skate-sub-col-card.drag-over { outline: 2px dashed var(--skate-accent); outline-offset: -2px; }
+
+	/* ── Featured column card ── */
+	.skate-featured-col-card { background: var(--skate-accent-bg); }
+	.skate-featured-col-card .skate-sub-col-card-head { background: transparent; }
+	.skate-featured-col-body {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px;
+	}
+	.skate-featured-col-body select { width: 100%; }
+	.skate-featured-edit-link {
+		font-size: 11px;
+		color: #2271b1;
+		text-decoration: none;
+	}
+	.skate-featured-edit-link:hover { text-decoration: underline; }
+	.skate-featured-bg-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 4px;
+	}
+	.skate-featured-bg-label {
+		font-size: 11px;
+		color: #50575e;
+		white-space: nowrap;
+		min-width: 54px;
+	}
+	.skate-featured-bg-color {
+		width: 32px;
+		height: 28px;
+		padding: 2px;
+		border: 1px solid #dcdcde;
+		border-radius: 4px;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+	.skate-featured-bg-hex {
+		width: 80px;
+		font-size: 12px;
+		font-family: monospace;
+		padding: 4px 6px;
+		border: 1px solid #dcdcde;
+		border-radius: 4px;
+	}
+	.skate-featured-col-remove {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #cc1818;
+		font-size: 14px;
+		padding: 0 2px;
+		line-height: 1;
+	}
+	.skate-sub-link-row {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		background: #f9f9f9;
+		border: 1px solid #e8e8e8;
+		border-radius: 4px;
+		padding: 4px 6px;
+		flex-wrap: wrap;
+	}
+	.skate-link-drag-handle {
+		cursor: grab;
+		color: #bbb;
+		font-size: 13px;
+		user-select: none;
+		flex-shrink: 0;
+		padding: 0 2px;
+	}
+	.skate-link-drag-handle:active { cursor: grabbing; }
+	.skate-sub-link-row.is-dragging { opacity: .35; }
+	.skate-sub-link-row.drag-over { outline: 2px dashed var(--skate-accent); outline-offset: -2px; border-radius: 4px; }
+	.skate-sub-link-icon-wrap {
+		flex-shrink: 0;
+		width: 52px;
+	}
+	.skate-sub-link-icon-wrap .skate-nb-svg-preview {
+		width: 24px;
+		height: 24px;
+	}
+	.skate-sub-link-icon-wrap textarea {
+		width: 100%;
+		font-size: 10px;
+		min-height: 36px;
+	}
+	</style>
+
+	<script>
+	(function () {
+		// Variant cards: toggle is-active on click
+		document.querySelectorAll('.skate-variant-card input[type="radio"]').forEach(function (radio) {
+			radio.addEventListener('change', function () {
+				var group = radio.closest('.skate-variant-cards');
+				if ( ! group ) return;
+				group.querySelectorAll('.skate-variant-card').forEach(function (card) { card.classList.remove('is-active'); });
+				radio.closest('.skate-variant-card').classList.add('is-active');
+			});
+		});
+
+		// Update all submenu parent indices before form submit (both tabs)
+		document.getElementById('skate-navbar-form').addEventListener('submit', function () {
+			// From links tab: no sub-containers anymore — handled via submenus tab hidden inputs directly
+			// From submenus tab: re-index by group
+			document.querySelectorAll('.skate-nav-sub-group').forEach(function (group) {
+				const li = group.dataset.linkIndex;
+				group.querySelectorAll('input[name="skate_nav_sub_parent[]"]').forEach(function (inp) {
+					inp.value = li;
+				});
+			});
+		});
+
+		// Remove row
+		document.addEventListener('click', function (e) {
+			const btn = e.target.closest('.skate-nb-remove');
+			if (!btn) return;
+			const el = btn.closest('.' + btn.dataset.cls);
+			if (!el) return;
+			if (btn.dataset.cls === 'skate-sub-col-card') {
+				const cwrap = el.closest('.skate-sub-col-wrap');
+				el.remove();
+				if (cwrap) skateUpdateColOrder(cwrap);
+			} else {
+				el.remove();
+			}
+		});
+
+		// Live SVG preview on textarea change
+		document.addEventListener('input', function (e) {
+			const ta = e.target.closest('textarea[name="skate_nav_sub_svg[]"], textarea[name="skate_nav_icon_svg[]"], textarea[name="skate_nav_link_icon_svg[]"], textarea[name="skate_nav_hbg_sub_svg[]"]');
+			if (!ta) return;
+			const preview = ta.closest('.skate-nb-svg-wrap').querySelector('.skate-nb-svg-preview');
+			if (preview) preview.innerHTML = ta.value;
+		});
+
+		// ── Page picker ──────────────────────────────────────────────────────────
+		var skatePages = window.skatePages || [];
+
+		function skateInitPicker(wrap) {
+			var pidInput  = wrap.querySelector('.skate-pid');
+			var urlInput  = wrap.querySelector('.skate-url-input');
+			var openBtn   = wrap.querySelector('.skate-pp-open');
+			var panel     = wrap.querySelector('.skate-pp-panel');
+			var filter    = wrap.querySelector('.skate-pp-filter');
+			var resultsCt = wrap.querySelector('.skate-pp-results');
+			var linked    = wrap.querySelector('.skate-pid-linked');
+			var titleEl   = wrap.querySelector('.skate-pid-linked-title');
+			var unlinkBtn = wrap.querySelector('.skate-pid-unlink');
+
+			if (!openBtn || !panel) return;
+
+			function renderResults(q) {
+				var list = q
+					? skatePages.filter(function(p) { return p.title.toLowerCase().indexOf(q.toLowerCase()) !== -1; })
+					: skatePages;
+				if (!list.length) {
+					resultsCt.innerHTML = '<div class="skate-pp-empty">No results</div>';
+					return;
+				}
+				resultsCt.innerHTML = list.slice(0, 40).map(function(p) {
+					return '<div class="skate-pp-result" data-id="' + p.id +
+						   '" data-url="' + p.url.replace(/"/g,'&quot;') +
+						   '" data-title="' + p.title.replace(/"/g,'&quot;') + '">' +
+						   p.title + '</div>';
+				}).join('');
+			}
+
+			openBtn.addEventListener('click', function(e) {
+				e.stopPropagation();
+				var wasHidden = panel.hidden;
+				// Close all other open panels first
+				document.querySelectorAll('.skate-pp-panel').forEach(function(p) { p.hidden = true; });
+				panel.hidden = !wasHidden;
+				if (!panel.hidden) {
+					// Position below the button, fixed to viewport
+					var rect = openBtn.getBoundingClientRect();
+					var panelW = 260;
+					panel.style.top  = (rect.bottom + 4) + 'px';
+					panel.style.left = Math.max(4, rect.right - panelW) + 'px';
+					renderResults(''); filter.value = ''; filter.focus();
+				}
+			});
+
+			filter.addEventListener('input', function() { renderResults(filter.value); });
+
+			resultsCt.addEventListener('click', function(e) {
+				var item = e.target.closest('.skate-pp-result');
+				if (!item) return;
+				pidInput.value  = item.dataset.id;
+				urlInput.value  = item.dataset.url;
+				if (titleEl)  titleEl.textContent  = item.dataset.title;
+				if (linked)   linked.hidden        = false;
+				var unresolved = wrap.querySelector('.skate-url-unresolved');
+				if (unresolved) unresolved.hidden = true;
+				// Auto-fill label input if empty
+				var row = wrap.closest('.skate-sub-link-row');
+				if (row) {
+					var labelInput = row.querySelector('input[type="text"][name*="_link_title"]');
+					if (labelInput && !labelInput.value.trim()) {
+						labelInput.value = item.dataset.title;
+					}
+				}
+				panel.hidden = true;
+			});
+
+			if (unlinkBtn) {
+				unlinkBtn.addEventListener('click', function() {
+					pidInput.value  = '0';
+					if (linked) linked.hidden = true;
+				});
+			}
+		}
+
+		document.addEventListener('click', function(e) {
+			if (!e.target.closest('.skate-pp-wrap')) {
+				document.querySelectorAll('.skate-pp-panel').forEach(function(p) { p.hidden = true; });
+			}
+		});
+
+		// Init pickers on existing rows
+		document.querySelectorAll('.skate-url-wrap').forEach(skateInitPicker);
+
+		// ── Picker HTML template (used in add-row handlers) ──────────────────────
+		function skatePickerHtml(urlName, pidName, style) {
+			style = style || 'flex:1;min-width:140px;';
+			return '<div class="skate-url-wrap" style="' + style + '">' +
+				'<input type="hidden" name="' + pidName + '" value="0" class="skate-pid">' +
+				'<div class="skate-pp-row">' +
+				'<input type="text" name="' + urlName + '" placeholder="URL" class="skate-url-input">' +
+				'<div class="skate-pp-wrap">' +
+				'<button type="button" class="button skate-pp-open">Page</button>' +
+				'<div class="skate-pp-panel" hidden>' +
+				'<input type="text" class="skate-pp-filter" placeholder="Search...">' +
+				'<div class="skate-pp-results"></div>' +
+				'</div>' +
+				'</div>' +
+				'</div>' +
+				'<div class="skate-pid-linked" hidden>' +
+				'<span class="skate-pid-icon">&#128196;</span>' +
+				'<span class="skate-pid-linked-title"></span>' +
+				'<button type="button" class="skate-pid-unlink" title="Remove link">&#x2715;</button>' +
+				'</div>' +
+				'</div>';
+		}
+
+		// Add link
+		const addLinkBtn = document.getElementById('skate-add-link');
+		if (addLinkBtn) {
+			addLinkBtn.addEventListener('click', function () {
+				const cont = document.getElementById('skate-nav-links-container');
+				const div  = document.createElement('div');
+				div.className = 'skate-nav-link-row';
+				div.innerHTML =
+					'<span class="skate-social-drag-handle">⠿</span>' +
+					'<div class="skate-nb-svg-wrap">' +
+					'<div class="skate-nb-svg-preview"></div>' +
+					'<textarea name="skate_nav_link_icon_svg[]" rows="2" placeholder="SVG"></textarea>' +
+					'</div>' +
+					'<input type="text" name="skate_nav_link_label[]" placeholder="Label" style="width:150px;">' +
+					skatePickerHtml('skate_nav_link_url[]', 'skate_nav_link_page_id[]') +
+					'<button type="button" class="button skate-nb-remove" data-cls="skate-nav-link-row">✕</button>';
+				cont.appendChild(div);
+				div.querySelectorAll('.skate-url-wrap').forEach(skateInitPicker);
+			});
+		}
+
+		// Add link inside a group (submenus tab)
+		document.addEventListener('click', function (e) {
+			const btn = e.target.closest('.skate-add-col-link');
+			if (!btn) return;
+			const li   = btn.dataset.li;
+			const ci   = btn.dataset.ci;
+			const gi   = btn.dataset.gi;
+			const cont = btn.closest('.skate-sub-group-card').querySelector('.skate-sub-col-links');
+			const div  = document.createElement('div');
+			div.className  = 'skate-sub-link-row';
+			div.draggable  = true;
+			const uName = 'skate_nav_col_link_url['    + li + '][' + ci + '][' + gi + '][]';
+			const pName = 'skate_nav_col_link_pid['    + li + '][' + ci + '][' + gi + '][]';
+			const tName = 'skate_nav_col_link_title['  + li + '][' + ci + '][' + gi + '][]';
+			const sName = 'skate_nav_col_link_svg['    + li + '][' + ci + '][' + gi + '][]';
+			const aName = 'skate_nav_col_link_anchor[' + li + '][' + ci + '][' + gi + '][]';
+			div.innerHTML =
+				'<span class="skate-link-drag-handle" title="Drag to reorder">⠿</span>' +
+				'<input type="hidden" name="' + sName + '" value="">' +
+				'<input type="text" name="' + tName + '" placeholder="Label" style="width:130px;">' +
+				skatePickerHtml(uName, pName) +
+				'<input type="text" name="' + aName + '" placeholder="#anchor" style="width:90px;" title="Anchor (e.g. section-id, without #)">' +
+				'<button type="button" class="button skate-nb-remove" data-cls="skate-sub-link-row">✕</button>';
+			cont.appendChild(div);
+			div.querySelectorAll('.skate-url-wrap').forEach(skateInitPicker);
+		});
+
+		// Add group inside a column (submenus tab)
+		document.addEventListener('click', function (e) {
+			const btn = e.target.closest('.skate-add-group');
+			if (!btn) return;
+			const li    = btn.dataset.li;
+			const ci    = btn.dataset.ci;
+			const gwrap = document.getElementById('skate-sub-groups-' + li + '-' + ci);
+			if (!gwrap) return;
+			const gi = parseInt(gwrap.dataset.nextGi, 10);
+			gwrap.dataset.nextGi = gi + 1;
+
+			const gTitle = 'skate_nav_col_group_title[' + li + '][' + ci + '][' + gi + ']';
+			const div = document.createElement('div');
+			div.className = 'skate-sub-group-card';
+			div.innerHTML =
+				'<div class="skate-sub-group-head">' +
+				'<input type="text" name="' + gTitle + '" placeholder="Group title">' +
+				'<button type="button" class="button skate-nb-remove" data-cls="skate-sub-group-card" title="Remove group">✕</button>' +
+				'</div>' +
+				'<div class="skate-sub-col-links" data-li="' + li + '" data-ci="' + ci + '" data-gi="' + gi + '"></div>' +
+				'<div class="skate-sub-add-link-row">' +
+				'<button type="button" class="button skate-add-col-link" data-li="' + li + '" data-ci="' + ci + '" data-gi="' + gi + '">+ Add link</button>' +
+				'</div>';
+			gwrap.appendChild(div);
+		});
+
+		// ── Column order helper ──────────────────────────────────────────────
+		function skateUpdateColOrder(cwrap) {
+			const section = cwrap.closest('.skate-tune-section');
+			if (!section) return;
+			const orderInput = section.querySelector('.skate-col-order-input');
+			if (!orderInput) return;
+			const order = [];
+			cwrap.querySelectorAll(':scope > .skate-sub-col-card').forEach(function (card) {
+				if (card.classList.contains('skate-featured-col-card')) {
+					order.push({type: 'featured', fci: parseInt(card.dataset.fci, 10)});
+				} else {
+					order.push({type: 'regular', ci: parseInt(card.dataset.ci, 10)});
+				}
+			});
+			orderInput.value = JSON.stringify(order);
+		}
+
+		// ── Drag & drop columns ───────────────────────────────────────────────
+		var skateDragSrc = null;
+		document.addEventListener('dragstart', function (e) {
+			const card = e.target.closest('.skate-sub-col-wrap > .skate-sub-col-card');
+			if (!card) return;
+			skateDragSrc = card;
+			e.dataTransfer.effectAllowed = 'move';
+			setTimeout(function () { card.classList.add('is-dragging'); }, 0);
+		});
+		document.addEventListener('dragend', function (e) {
+			const card = e.target.closest('.skate-sub-col-wrap > .skate-sub-col-card');
+			if (card) card.classList.remove('is-dragging');
+			document.querySelectorAll('.skate-sub-col-card.drag-over').forEach(function (c) { c.classList.remove('drag-over'); });
+			skateDragSrc = null;
+		});
+		document.addEventListener('dragover', function (e) {
+			const card = e.target.closest('.skate-sub-col-wrap > .skate-sub-col-card');
+			if (!card || card === skateDragSrc) return;
+			e.preventDefault();
+			document.querySelectorAll('.skate-sub-col-card.drag-over').forEach(function (c) { c.classList.remove('drag-over'); });
+			card.classList.add('drag-over');
+		});
+		document.addEventListener('dragleave', function (e) {
+			const card = e.target.closest('.skate-sub-col-wrap > .skate-sub-col-card');
+			if (card) card.classList.remove('drag-over');
+		});
+		document.addEventListener('drop', function (e) {
+			const target = e.target.closest('.skate-sub-col-wrap > .skate-sub-col-card');
+			if (!target || !skateDragSrc || target === skateDragSrc) return;
+			const cwrap = target.closest('.skate-sub-col-wrap');
+			if (!cwrap || !cwrap.contains(skateDragSrc)) return;
+			e.preventDefault();
+			target.classList.remove('drag-over');
+			const rect = target.getBoundingClientRect();
+			if (e.clientY < rect.top + rect.height / 2) {
+				cwrap.insertBefore(skateDragSrc, target);
+			} else {
+				target.after(skateDragSrc);
+			}
+			skateUpdateColOrder(cwrap);
+		});
+
+		// ── Drag & drop link rows ────────────────────────────────────────────
+		var skateLinkDragSrc = null;
+		document.addEventListener('dragstart', function (e) {
+			const row = e.target.closest('.skate-sub-col-links > .skate-sub-link-row');
+			if (!row) return;
+			skateLinkDragSrc = row;
+			e.dataTransfer.effectAllowed = 'move';
+			e.stopPropagation();
+			setTimeout(function () { row.classList.add('is-dragging'); }, 0);
+		}, true);
+		document.addEventListener('dragend', function (e) {
+			const row = e.target.closest('.skate-sub-col-links > .skate-sub-link-row');
+			if (row) row.classList.remove('is-dragging');
+			document.querySelectorAll('.skate-sub-link-row.drag-over').forEach(function (r) { r.classList.remove('drag-over'); });
+			skateLinkDragSrc = null;
+		}, true);
+		document.addEventListener('dragover', function (e) {
+			if (!skateLinkDragSrc) return;
+			const row = e.target.closest('.skate-sub-col-links > .skate-sub-link-row');
+			if (!row || row === skateLinkDragSrc) return;
+			e.preventDefault();
+			e.stopPropagation();
+			document.querySelectorAll('.skate-sub-link-row.drag-over').forEach(function (r) { r.classList.remove('drag-over'); });
+			row.classList.add('drag-over');
+		}, true);
+		document.addEventListener('dragleave', function (e) {
+			const row = e.target.closest('.skate-sub-col-links > .skate-sub-link-row');
+			if (row) row.classList.remove('drag-over');
+		}, true);
+		document.addEventListener('drop', function (e) {
+			if (!skateLinkDragSrc) return;
+			const target = e.target.closest('.skate-sub-col-links > .skate-sub-link-row');
+			if (!target || target === skateLinkDragSrc) return;
+			const cont = target.closest('.skate-sub-col-links');
+			if (!cont || !cont.contains(skateLinkDragSrc)) return;
+			e.preventDefault();
+			e.stopPropagation();
+			target.classList.remove('drag-over');
+			const rect = target.getBoundingClientRect();
+			if (e.clientY < rect.top + rect.height / 2) {
+				cont.insertBefore(skateLinkDragSrc, target);
+			} else {
+				target.after(skateLinkDragSrc);
+			}
+		}, true);
+
+		// ── Collapse / expand column card ────────────────────────────────────
+		document.addEventListener('click', function (e) {
+			const head = e.target.closest('.skate-sub-col-card-head');
+			if (!head) return;
+			// Don't collapse when clicking drag handle or remove button
+			if (e.target.closest('.skate-col-drag-handle, .skate-nb-remove, .skate-featured-col-remove')) return;
+			const card = head.closest('.skate-sub-col-card');
+			if (card) card.classList.toggle('is-collapsed');
+		});
+
+		// Shared SVG icons for column cards
+		const colSvgChevron = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+		const colSvgClose   = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+		// ── Add column ────────────────────────────────────────────────────────
+		document.addEventListener('click', function (e) {
+			const btn = e.target.closest('.skate-add-column');
+			if (!btn) return;
+			const li    = btn.dataset.li;
+			const cwrap = document.getElementById('skate-sub-col-wrap-' + li);
+			if (!cwrap) return;
+			const ci = parseInt(cwrap.dataset.nextCi, 10);
+			cwrap.dataset.nextCi = ci + 1;
+
+			const div = document.createElement('div');
+			div.className   = 'skate-sub-col-card';
+			div.dataset.ci  = ci;
+			div.draggable   = true;
+			div.innerHTML =
+				'<div class="skate-sub-col-card-head">' +
+				'<span class="skate-col-drag-handle" title="Drag to reorder">⠿</span>' +
+				'<span class="skate-sub-col-label">Column ' + (ci + 1) + '</span>' +
+				'<button type="button" class="skate-col-collapse" title="Toggle">' + colSvgChevron + '</button>' +
+				'<button type="button" class="skate-nb-remove" data-cls="skate-sub-col-card" title="Remove column">' + colSvgClose + '</button>' +
+				'</div>' +
+				'<div class="skate-sub-col-card-body">' +
+				'<div class="skate-sub-groups-wrap" id="skate-sub-groups-' + li + '-' + ci + '" data-li="' + li + '" data-ci="' + ci + '" data-next-gi="0"></div>' +
+				'<div class="skate-sub-add-group-row">' +
+				'<button type="button" class="button skate-add-group" data-li="' + li + '" data-ci="' + ci + '">+ Add group</button>' +
+				'</div>' +
+				'</div>';
+			// Insert before template element if present
+			const tpl = cwrap.querySelector('template');
+			cwrap.insertBefore(div, tpl || null);
+			skateUpdateColOrder(cwrap);
+		});
+
+		// Add button
+		const addBtnBtn = document.getElementById('skate-add-btn');
+		if (addBtnBtn) {
+			addBtnBtn.addEventListener('click', function () {
+				const cont = document.getElementById('skate-nav-buttons-container');
+				const div  = document.createElement('div');
+				div.className = 'skate-nav-btn-row';
+				div.innerHTML =
+					'<span class="skate-social-drag-handle">⠿</span>' +
+					'<input type="text" name="skate_nav_btn_label[]" placeholder="Label" style="width:150px;">' +
+					skatePickerHtml('skate_nav_btn_url[]', 'skate_nav_btn_page_id[]') +
+					'<select name="skate_nav_btn_style[]" style="width:130px;">' +
+					'<option value="filled">Filled Secondary</option>' +
+					'<option value="filled-dark">Filled Primary</option>' +
+					'<option value="outline">Outline</option>' +
+					'</select>' +
+					'<button type="button" class="button skate-nb-remove" data-cls="skate-nav-btn-row">✕</button>';
+				cont.appendChild(div);
+				div.querySelectorAll('.skate-url-wrap').forEach(skateInitPicker);
+			});
+		}
+
+		// Add icon
+		const addIconBtn = document.getElementById('skate-add-icon');
+		if (addIconBtn) {
+			addIconBtn.addEventListener('click', function () {
+				const cont = document.getElementById('skate-nav-icons-container');
+				const div  = document.createElement('div');
+				div.className = 'skate-nav-icon-row';
+				div.innerHTML =
+					'<span class="skate-social-drag-handle">⠿</span>' +
+					'<div class="skate-nb-svg-wrap">' +
+					'<div class="skate-nb-svg-preview"></div>' +
+					'<textarea name="skate_nav_icon_svg[]" rows="3" placeholder="SVG"></textarea>' +
+					'</div>' +
+					skatePickerHtml('skate_nav_icon_url[]', 'skate_nav_icon_page_id[]') +
+					'<button type="button" class="button skate-nb-remove" data-cls="skate-nav-icon-row">✕</button>';
+				cont.appendChild(div);
+				div.querySelectorAll('.skate-url-wrap').forEach(skateInitPicker);
+			});
+		}
+
+		// Add hamburger sub-item
+		const addHbgSubBtn = document.getElementById('skate-add-hbg-sub');
+		if (addHbgSubBtn) {
+			addHbgSubBtn.addEventListener('click', function () {
+				const cont = document.getElementById('skate-nav-hbg-sub-container');
+				const div  = document.createElement('div');
+				div.className = 'skate-nav-sub-row';
+				div.innerHTML =
+					'<span class="skate-social-drag-handle">⠿</span>' +
+					'<div class="skate-nb-svg-wrap">' +
+					'<div class="skate-nb-svg-preview"></div>' +
+					'<textarea name="skate_nav_hbg_sub_svg[]" rows="3" placeholder="SVG"></textarea>' +
+					'</div>' +
+					'<input type="text" name="skate_nav_hbg_sub_title[]" placeholder="Title" style="flex:1;">' +
+					'<input type="text" name="skate_nav_hbg_sub_url[]" placeholder="URL" style="flex:1;">' +
+					'<button type="button" class="button skate-nb-remove" data-cls="skate-nav-sub-row">✕</button>';
+				cont.appendChild(div);
+			});
+		}
+
+		// Hamburger enable toggle
+		var hbgToggle = document.querySelector('input[name="skate_nav_hamburger_enabled"]');
+		if (hbgToggle) {
+			hbgToggle.addEventListener('change', function() {
+				var body = document.querySelector('.skate-hbg-body');
+				if (body) body.hidden = !this.checked;
+			});
+		}
+
+		// ── Add featured column ──────────────────────────────────────────────
+		document.addEventListener('click', function (e) {
+			const btn = e.target.closest('.skate-add-featured-col');
+			if (!btn) return;
+			const li    = btn.dataset.li;
+			const cwrap = document.getElementById('skate-sub-col-wrap-' + li);
+			if (!cwrap) return;
+			const fci = parseInt(cwrap.dataset.nextFci || '0', 10);
+			cwrap.dataset.nextFci = fci + 1;
+
+			// Clone options from the template
+			const tpl = document.getElementById('skate-feat-tpl-' + li);
+			const optHtml = tpl ? tpl.innerHTML : '<option value="0">— None —</option>';
+
+			const div = document.createElement('div');
+			div.className      = 'skate-sub-col-card skate-featured-col-card';
+			div.dataset.fci    = fci;
+			div.draggable      = true;
+			div.innerHTML =
+				'<div class="skate-sub-col-card-head">' +
+				'<span class="skate-col-drag-handle" title="Drag to reorder">⠿</span>' +
+				'<span class="skate-sub-col-label">Featured</span>' +
+				'<button type="button" class="skate-col-collapse" title="Toggle">' + colSvgChevron + '</button>' +
+				'<button type="button" class="skate-featured-col-remove" title="Remove">' + colSvgClose + '</button>' +
+				'</div>' +
+				'<div class="skate-featured-col-body">' +
+				'<select name="skate_nav_featured_post_id[' + li + '][' + fci + ']" class="skate-featured-select">' +
+				optHtml +
+				'</select>' +
+				'<a href="#" class="skate-featured-edit-link" hidden>Edit in Site Editor &#8599;</a>' +
+				'<div class="skate-featured-bg-row">' +
+				'<label class="skate-featured-bg-label">BG Color</label>' +
+				'<input type="color" class="skate-featured-bg-color" name="skate_nav_featured_bg_color[' + li + '][' + fci + ']" value="#F2F4F6">' +
+				'<input type="text" class="skate-featured-bg-hex" value="#F2F4F6" maxlength="7" placeholder="#rrggbb">' +
+				'</div>' +
+				'</div>';
+			const tplEl = cwrap.querySelector('template');
+			cwrap.insertBefore(div, tplEl || null);
+			skateUpdateColOrder(cwrap);
+		});
+
+		// ── Remove featured column ────────────────────────────────────────────
+		document.addEventListener('click', function (e) {
+			const btn = e.target.closest('.skate-featured-col-remove');
+			if (!btn) return;
+			const card  = btn.closest('.skate-featured-col-card');
+			if (!card) return;
+			const cwrap = card.closest('.skate-sub-col-wrap');
+			card.remove();
+			if (cwrap) skateUpdateColOrder(cwrap);
+		});
+
+		// ── Featured pattern select → update edit link ────────────────────────
+		document.addEventListener('change', function (e) {
+			const select = e.target.closest('.skate-featured-select');
+			if (!select) return;
+			const card    = select.closest('.skate-featured-col-card');
+			if (!card) return;
+			const option  = select.options[select.selectedIndex];
+			const editUrl = (option && option.dataset.editUrl) || '';
+			const editLink = card.querySelector('.skate-featured-edit-link');
+			if (editLink) {
+				editLink.href   = editUrl || '#';
+				editLink.hidden = !editUrl;
+			}
+		});
+
+		// ── Featured BG color ↔ hex sync ─────────────────────────────────────
+		document.addEventListener('input', function (e) {
+			const colorPicker = e.target.closest('.skate-featured-bg-color');
+			if (!colorPicker) return;
+			const row = colorPicker.closest('.skate-featured-bg-row');
+			if (row) row.querySelector('.skate-featured-bg-hex').value = colorPicker.value;
+		});
+		document.addEventListener('change', function (e) {
+			const hexInput = e.target.closest('.skate-featured-bg-hex');
+			if (!hexInput) return;
+			const val = hexInput.value.trim();
+			if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+				const row = hexInput.closest('.skate-featured-bg-row');
+				if (row) row.querySelector('.skate-featured-bg-color').value = val;
+			}
+		});
+
+		// ── Icon mode card picker — show/hide default SVG field ──────────────
+		document.querySelectorAll('input[name="skate_navbar_submenu_icon_mode"]').forEach(function (radio) {
+			radio.addEventListener('change', function () {
+				const defaultWrap = document.querySelector('.skate-icon-default-wrap');
+				if (defaultWrap) defaultWrap.hidden = (radio.value !== 'default');
+			});
+		});
+
+		// ── Import file picker ───────────────────────────────────────────────────
+		const importPicker = document.getElementById('skate-import-file-picker');
+		const importJson   = document.getElementById('skate-import-json-data');
+		const importSubmit = document.getElementById('skate-import-submit-btn');
+		if (importPicker) {
+			importPicker.addEventListener('change', function () {
+				const file = this.files[0];
+				if (!file) return;
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					try {
+						const parsed = JSON.parse(e.target.result);
+						if (!Array.isArray(parsed)) { alert('Invalid preset file.'); return; }
+						importJson.value = e.target.result;
+						importSubmit.hidden = false;
+						importSubmit.textContent = 'Import ' + parsed.length + ' preset' + (parsed.length !== 1 ? 's' : '') + ' from ' + file.name;
+					} catch (err) {
+						alert('Could not parse JSON file.');
+					}
+				};
+				reader.readAsText(file);
+			});
+		}
+
+		// Logo light media upload
+		(function () {
+			const btn     = document.getElementById('skate-logo-light-btn');
+			const removeBtn = document.getElementById('skate-logo-light-remove');
+			const urlInput  = document.getElementById('skate_navbar_logo_light_url');
+			const preview   = document.getElementById('skate-logo-light-preview');
+			if (!btn) return;
+
+			function setLogoLight(url) {
+				urlInput.value = url;
+				if (url) {
+					preview.src = url;
+					preview.style.display = '';
+					removeBtn.hidden = false;
+				} else {
+					preview.src = '';
+					preview.style.display = 'none';
+					removeBtn.hidden = true;
+				}
+			}
+
+			btn.addEventListener('click', function () {
+				if (!window.wp || !wp.media) return;
+				const frame = wp.media({ title: 'Choose Logo Light', button: { text: 'Use this image' }, multiple: false });
+				frame.on('select', function () {
+					setLogoLight(frame.state().get('selection').first().toJSON().url);
+				});
+				frame.open();
+			});
+
+			if (removeBtn) {
+				removeBtn.addEventListener('click', function () { setLogoLight(''); });
+			}
+		})();
+	})();
+	</script>
+	<?php
+}
