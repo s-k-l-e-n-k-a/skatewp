@@ -161,7 +161,7 @@ add_filter('pre_set_site_transient_update_themes', function ($transient) {
     // Require the correct update key to be set; otherwise hide available updates.
     if ( get_option( 'skate_update_key', '' ) !== SKATE_UPDATE_KEY ) return $transient;
 
-    $remote = wp_remote_get('https://wordliner-wlac.s3.eu-central-1.amazonaws.com/skate/update-metadata.json');
+    $remote = wp_remote_get('https://raw.githubusercontent.com/s-k-l-e-n-k-a/skatewp/main/update-metadata.json');
     if (is_wp_error($remote)) return $transient;
 
     $remote_data = json_decode(wp_remote_retrieve_body($remote));
