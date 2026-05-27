@@ -191,7 +191,7 @@ add_filter('pre_set_site_transient_update_themes', function ($transient) {
  * Auto-locks after a successful download (single-use).
  */
 add_filter( 'upgrader_pre_download', function ( $reply, $package, $upgrader ) {
-    if ( strpos( (string) $package, 'wordliner-wlac.s3' ) === false ) {
+    if ( strpos( (string) $package, 'github.com/s-k-l-e-n-k-a/skatewp' ) === false ) {
         return $reply; // not our theme package — don't interfere
     }
 
