@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Services C: Feature + Pair</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-heading: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --dark:   #17263a;
+  --bg:     #f0ede6;
+  --card:   #ffffff;
+  --muted:  rgba(23,38,58,.45);
+  --rule:   rgba(23,38,58,.10);
+  --accent: #17263a;
+}
+
+body { font-family: var(--font-body); background: var(--dark); margin: 0; }
+.stub { background: var(--bg); height: 80px; }
+
+/* ── Section ── */
+.fp {
+  background: var(--bg);
+  padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+}
+
+.fp__inner { max-width: 1160px; margin: 0 auto; }
+
+/* ── Header ── */
+.fp__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: clamp(2.5rem, 4vw, 3.5rem);
+}
+
+.fp__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .8rem;
+}
+
+.fp__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(32px, 3.5vw, 48px);
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -.03em;
+  line-height: 1.0;
+}
+
+.fp__heading em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.fp__tagline {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 340px;
+  text-align: right;
+}
+
+/* ── Feature card (landscape, row 1) ── */
+.fp__feature {
+  background: var(--card);
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  overflow: hidden;
+  margin-bottom: 16px;
+  min-height: 340px;
+}
+
+.fp__feature-illus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(2.5rem, 5vw, 4rem);
+  border-right: 1px solid var(--rule);
+  background: rgba(23,38,58,.02);
+}
+
+.fp__feature-illus svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}
+
+.fp__feature-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2.5rem, 5vw, 4rem);
+  gap: 1.25rem;
+}
+
+.fp__num {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.fp__title {
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+.fp__text {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.fp__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--dark);
+  opacity: .5;
+  margin-top: auto;
+  padding-top: .5rem;
+  border-top: 1px solid var(--rule);
+}
+
+/* ── Pair: 2 portrait cards (row 2) ── */
+.fp__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fp__card {
+  background: var(--card);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.fp__card-illus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(2rem, 4vw, 3rem) clamp(1.5rem, 3vw, 2.5rem);
+  background: rgba(23,38,58,.025);
+  border-bottom: 1px solid var(--rule);
+}
+
+.fp__card-illus svg {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+}
+
+.fp__card-body {
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+/* reuse title/num/text/tag classes */
+.fp__card .fp__num { display: block; margin-bottom: -.25rem; }
+
+@media (max-width: 768px) {
+  .fp__feature { grid-template-columns: 1fr; min-height: auto; }
+  .fp__feature-illus { border-right: none; border-bottom: 1px solid var(--rule); }
+  .fp__pair { grid-template-columns: 1fr; }
+  .fp__header { flex-direction: column; align-items: flex-start; }
+  .fp__tagline { text-align: left; }
+}
+</style>
+</head>
+<body>
+
+<div class="stub"></div>
+
+<section class="fp">
+  <div class="fp__inner">
+
+    <!-- Header -->
+    <div class="fp__header">
+      <div>
+        <p class="fp__eyebrow">What we do</p>
+        <h2 class="fp__heading">How we<br><em>work</em></h2>
+      </div>
+      <p class="fp__tagline">A documentary production house built on three convictions — depth, fluidity, and reach.</p>
+    </div>
+
+    <!-- Feature card -->
+    <div class="fp__feature">
+      <div class="fp__feature-illus">
+        <!-- Shell -->
+        <svg viewBox="0 0 160 100" fill="none" stroke="#17263a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14,50 Q25,10 80,12 Q135,10 146,50 Q135,90 80,88 Q25,90 14,50Z"/>
+          <path d="M16,50 Q48,27 100,20"/>
+          <path d="M16,50 Q50,36 108,30"/>
+          <path d="M16,50 Q50,50 114,48"/>
+          <path d="M16,50 Q50,64 108,70"/>
+          <path d="M16,50 Q48,73 100,80"/>
+          <circle cx="16" cy="50" r="3.5" fill="#17263a" stroke="none"/>
+        </svg>
+      </div>
+      <div class="fp__feature-body">
+        <span class="fp__num">01 — Depth</span>
+        <h3 class="fp__title">We dive into people's realities</h3>
+        <p class="fp__text">We produce with passion documentary films about real people. Diving deep into their issues and immersing ourselves in their realities — until the story reveals itself on its own terms.</p>
+        <span class="fp__tag">Documentary · Portrait · Social</span>
+      </div>
+    </div>
+
+    <!-- Pair -->
+    <div class="fp__pair">
+
+      <div class="fp__card">
+        <div class="fp__card-illus">
+          <!-- Wave -->
+          <svg viewBox="0 0 150 120" fill="none" stroke="#17263a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14,92 Q20,54 50,34 Q70,22 76,13 Q80,7 72,13 Q58,26 65,40 Q72,54 100,64 Q122,73 134,83 Q140,89 134,94"/>
+            <path d="M74,13 Q68,5 61,9"/>
+            <path d="M74,13 Q81,4 88,8"/>
+            <path d="M14,102 Q42,94 66,102 Q90,110 114,102 Q126,98 132,102"/>
+            <path d="M22,112 Q44,106 64,112 Q84,118 100,112"/>
+          </svg>
+        </div>
+        <div class="fp__card-body">
+          <span class="fp__num">02 — Fluidity</span>
+          <h3 class="fp__title">We swim through different currents</h3>
+          <p class="fp__text">In form and content — sometimes upstream. Always combining a social perspective, creativity and quality images.</p>
+          <span class="fp__tag">Form · Narrative · Craft</span>
+        </div>
+      </div>
+
+      <div class="fp__card">
+        <div class="fp__card-illus">
+          <!-- Spiral shell -->
+          <svg viewBox="0 0 120 120" fill="none" stroke="#17263a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="60" cy="60" r="54"/>
+            <path d="M60,60 Q78,42 78,60 Q78,82 60,88 Q36,95 18,76 Q6,52 18,28 Q34,4 62,5 Q92,5 108,30 Q122,56 104,82 Q86,106 60,112"/>
+            <path d="M60,60 Q67,52 67,60 Q67,70 60,73 Q50,76 44,68"/>
+          </svg>
+        </div>
+        <div class="fp__card-body">
+          <span class="fp__num">03 — Reach</span>
+          <h3 class="fp__title">We move across uncharted waters</h3>
+          <p class="fp__text">Working worldwide with an international network of filmmakers, artists and dreamers — assembled uniquely for every project.</p>
+          <span class="fp__tag">Global · Network · Collaboration</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<div class="stub"></div>
+
+</body>
+</html>

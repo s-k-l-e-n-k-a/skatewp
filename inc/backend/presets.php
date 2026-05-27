@@ -11,8 +11,8 @@
  * Border-radius system:
  *   - Each preset defines a default `radius` value.
  *   - `skate_get_active_radius()` returns the effective radius (custom override or preset default).
- *   - `--pace-radius` CSS custom property is always injected on :root.
- *   - `.pace-radius` utility class lets any block adopt the preset radius.
+ *   - `--skate-radius` CSS custom property is always injected on :root.
+ *   - `.skate-radius` utility class lets any block adopt the preset radius.
  *   - Core blocks receive radius via theme.json overrides (generated dynamically).
  *
  * Gradient system:
@@ -22,8 +22,8 @@
  *
  * Shadow system:
  *   - Individual options: skate_shadow_x/y/blur/spread/color/alpha
- *   - `--pace-shadow` CSS custom property injected on :root.
- *   - `.pace-shadow` utility class applies it as box-shadow.
+ *   - `--skate-shadow` CSS custom property injected on :root.
+ *   - `.skate-shadow` utility class applies it as box-shadow.
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -33,8 +33,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 // ----------------------------------------
 define( 'SKATE_DEFAULT_COLOR_MAIN',      '#17263a' );
 define( 'SKATE_DEFAULT_COLOR_SECONDARY', '#d6b36d' );
-define( 'SKATE_DEFAULT_COLOR_BLACK',      '#17263A' );
-define( 'SKATE_DEFAULT_COLOR_LIGHT_GRAY', '#F2F4F6' );
+define( 'SKATE_DEFAULT_COLOR_BLACK',      '#0D0D0D' );
+define( 'SKATE_DEFAULT_COLOR_LIGHT_GRAY', '#F2F2F0' );
+define( 'SKATE_DEFAULT_COLOR_MUTED',      '#888888' );
+define( 'SKATE_DEFAULT_COLOR_MUTED_DARK', '#444444' );
 define( 'SKATE_DEFAULT_GRADIENT_ANGLE',   180 );
 define( 'SKATE_DEFAULT_GRADIENT_C1',     '#17263A' );
 define( 'SKATE_DEFAULT_GRADIENT_P1',     0 );
@@ -53,6 +55,57 @@ define( 'SKATE_DEFAULT_SHADOW_ALPHA',  12 ); // 0–100 → 0.00–1.00 opacity
 
 // Spacer defaults
 define( 'SKATE_DEFAULT_SPACER_SIZE', 'm' ); // s | m | l | xl
+
+// Parallax defaults
+define( 'SKATE_DEFAULT_PARALLAX_SPEED',    1.4 );
+define( 'SKATE_DEFAULT_PARALLAX_FADE_END', 60  );
+
+function skate_is_parallax_enabled(): bool {
+	return get_option( 'skate_parallax_enabled', '' ) === '1';
+}
+function skate_get_parallax_speed(): float {
+	$v = (float) get_option( 'skate_parallax_speed', '' );
+	return ( $v >= 1.1 && $v <= 3.0 ) ? $v : SKATE_DEFAULT_PARALLAX_SPEED;
+}
+function skate_is_parallax_fade_enabled(): bool {
+	return get_option( 'skate_parallax_fade', '' ) === '1';
+}
+function skate_get_parallax_fade_end(): int {
+	$v = (int) get_option( 'skate_parallax_fade_end', '' );
+	return ( $v >= 20 && $v <= 100 ) ? $v : SKATE_DEFAULT_PARALLAX_FADE_END;
+}
+
+// Cursor defaults
+define( 'SKATE_DEFAULT_CURSOR_STYLE', 'off' );
+
+function skate_get_cursor_style(): string {
+	$v = get_option( 'skate_cursor_style', '' );
+	return in_array( $v, [ 'off', 'circle', 'dot-ring' ], true ) ? $v : SKATE_DEFAULT_CURSOR_STYLE;
+}
+function skate_is_cursor_enabled(): bool {
+	return skate_get_cursor_style() !== 'off';
+}
+
+// Hero FX defaults
+define( 'SKATE_DEFAULT_HERO_FX_MODE',      'distortion' );
+define( 'SKATE_DEFAULT_HERO_FX_INTENSITY', 50 );
+define( 'SKATE_DEFAULT_HERO_FX_RADIUS',    45 );
+
+function skate_get_hero_fx_mode(): string {
+	$v = get_option( 'skate_hero_fx_mode', '' );
+	return in_array( $v, [ 'off', 'distortion', 'glitch', 'rgb' ], true ) ? $v : SKATE_DEFAULT_HERO_FX_MODE;
+}
+function skate_is_hero_fx_enabled(): bool {
+	return skate_get_hero_fx_mode() !== 'off';
+}
+function skate_get_hero_fx_intensity(): int {
+	$v = (int) get_option( 'skate_hero_fx_intensity', '' );
+	return ( $v >= 10 && $v <= 100 ) ? $v : SKATE_DEFAULT_HERO_FX_INTENSITY;
+}
+function skate_get_hero_fx_radius(): int {
+	$v = (int) get_option( 'skate_hero_fx_radius', '' );
+	return ( $v >= 10 && $v <= 100 ) ? $v : SKATE_DEFAULT_HERO_FX_RADIUS;
+}
 
 /**
  * Reads the raw theme.json file as an array (cached in a static).
@@ -102,6 +155,36 @@ function skate_get_active_color_light_gray(): string {
 	return get_option( 'skate_color_light_gray', '' )
 		?: skate_theme_json_color( 'light-gray' )
 		?: SKATE_DEFAULT_COLOR_LIGHT_GRAY;
+}
+
+function skate_get_active_color_muted(): string {
+	return get_option( 'skate_color_muted', '' )
+		?: skate_theme_json_color( 'muted' )
+		?: SKATE_DEFAULT_COLOR_MUTED;
+}
+
+function skate_get_active_color_muted_dark(): string {
+	return get_option( 'skate_color_muted_dark', '' )
+		?: skate_theme_json_color( 'muted-dark' )
+		?: SKATE_DEFAULT_COLOR_MUTED_DARK;
+}
+
+function skate_sanitize_hex_color_alpha( string $hex ): string {
+	$hex = strtolower( trim( $hex ) );
+	if ( preg_match( '/^#[0-9a-f]{6}$/', $hex ) ) return $hex;
+	if ( preg_match( '/^#[0-9a-f]{8}$/', $hex ) ) return $hex;
+	return '';
+}
+
+function skate_hex_alpha_to_rgba( string $hex ): string {
+	if ( strlen( $hex ) === 9 ) {
+		$r = hexdec( substr( $hex, 1, 2 ) );
+		$g = hexdec( substr( $hex, 3, 2 ) );
+		$b = hexdec( substr( $hex, 5, 2 ) );
+		$a = round( hexdec( substr( $hex, 7, 2 ) ) / 255, 3 );
+		return "rgba($r,$g,$b,$a)";
+	}
+	return $hex;
 }
 
 // ── Button style getters ─────────────────────────────────────────────────────
@@ -262,24 +345,24 @@ function skate_get_presets(): array {
 			'overrides'   => null, // radius applied dynamically via skate_build_radius_overrides()
 			'css' => '
 				/* Images */
-				.wp-block-image img   { border-radius: var(--pace-radius); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-				figure.wp-block-image { overflow: hidden; border-radius: var(--pace-radius); }
+				.wp-block-image img   { border-radius: var(--skate-radius); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+				figure.wp-block-image { overflow: hidden; border-radius: var(--skate-radius); }
 
 				/* Buttons */
 				.wp-block-button__link { box-shadow: 0 2px 8px rgba(0,0,0,0.10); }
 
 				/* Form inputs */
-				input, select, textarea { border-radius: var(--pace-radius) !important; }
-				.wp-block-search__input { border-radius: var(--pace-radius) !important; }
+				input, select, textarea { border-radius: var(--skate-radius) !important; }
+				.wp-block-search__input { border-radius: var(--skate-radius) !important; }
 
 				/* Group blocks with background (cards) — skip full-width layout wrappers */
-				.wp-block-group:not(.alignfull):not(.alignwide)[style*="background"] { border-radius: var(--pace-radius); overflow: hidden; }
+				.wp-block-group:not(.alignfull):not(.alignwide)[style*="background"] { border-radius: var(--skate-radius); overflow: hidden; }
 
 				/* Cover blocks */
-				.wp-block-cover { border-radius: var(--pace-radius); overflow: hidden; }
+				.wp-block-cover { border-radius: var(--skate-radius); overflow: hidden; }
 
 				/* Greenshift containers with explicit background */
-				.gspb_container[style*="background"] { border-radius: var(--pace-radius); overflow: hidden; }
+				.gspb_container[style*="background"] { border-radius: var(--skate-radius); overflow: hidden; }
 
 				/* Subtle softening */
 				body { letter-spacing: 0.1px; }
@@ -353,6 +436,37 @@ function skate_get_presets(): array {
 			',
 		],
 
+		'skate' => [
+			'label'       => __( 'SkateWP', 'skate' ),
+			'description' => __( 'Bold and modern — high-contrast, editorial feel. The SkateWP default.', 'skate' ),
+			'icon'        => '🛹',
+			'radius'      => '0px',
+			'overrides'   => [
+				'version'  => 3,
+				'settings' => [
+					'color' => [
+						'palette' => [
+							[ 'color' => '#0D0D0D', 'name' => 'Main Color',      'slug' => 'main-color' ],
+							[ 'color' => '#FF5500', 'name' => 'Secondary Color', 'slug' => 'secondary-color' ],
+							[ 'color' => '#F2F2F0', 'name' => 'Light Gray',      'slug' => 'light-gray' ],
+							[ 'color' => '#0D0D0D', 'name' => 'Black',           'slug' => 'black' ],
+							[ 'color' => '#FFFFFF', 'name' => 'White',           'slug' => 'white' ],
+						],
+					],
+				],
+				'styles' => [
+					'typography' => [
+						'letterSpacing' => '-0.2px',
+					],
+				],
+			],
+			'css' => '
+				h1, h2 { font-weight: 800; letter-spacing: -0.03em; }
+				h3, h4  { font-weight: 700; }
+				.wp-block-button__link { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85em; }
+			',
+		],
+
 	];
 }
 
@@ -376,7 +490,7 @@ function skate_get_active_radius_corners(): array {
 		$px = (int) $raw;
 		return [ 'tl' => $px, 'tr' => $px, 'br' => $px, 'bl' => $px ];
 	}
-	$key     = get_option( 'skate_active_preset', 'eckig' );
+	$key     = get_option( 'skate_active_preset', 'skate' );
 	$presets = skate_get_presets();
 	$px      = (int) ( $presets[ $key ]['radius'] ?? '0px' );
 	return [ 'tl' => $px, 'tr' => $px, 'br' => $px, 'bl' => $px ];
@@ -430,7 +544,7 @@ function skate_build_radius_overrides( array $corners ): array {
 // Helper: get the active preset's CSS
 // ----------------------------------------
 function skate_get_preset_css(): string {
-	$key     = get_option( 'skate_active_preset', 'eckig' );
+	$key     = get_option( 'skate_active_preset', 'skate' );
 	$presets = skate_get_presets();
 	return trim( $presets[ $key ]['css'] ?? '' );
 }
@@ -577,117 +691,66 @@ function skate_get_secondary_contrast_css(): string {
 	return ".wp-block-button .wp-block-button__link.has-secondary-color-background-color,.p-button.p-component{color:{$main}!important}";
 }
 
-function skate_get_mono_presets(): array {
-	return [
-		[
-			'slug' => 'ozean',    'name' => 'Ocean',
-			'main' => '#1a3050', 'secondary' => '#3a6494',
-			'gradient' => [ ['c'=>'#1A3050','p'=>0], ['c'=>'#2A4A7A','p'=>50], ['c'=>'#1A3050','p'=>100] ],
-		],
-		[
-			'slug' => 'wald',     'name' => 'Forest',
-			'main' => '#1b3a28', 'secondary' => '#2f6547',
-			'gradient' => [ ['c'=>'#1B3A28','p'=>0], ['c'=>'#2A5438','p'=>50], ['c'=>'#1B3A28','p'=>100] ],
-		],
-		[
-			'slug' => 'amethyst', 'name' => 'Amethyst',
-			'main' => '#2e1a5e', 'secondary' => '#5c3aaa',
-			'gradient' => [ ['c'=>'#2E1A5E','p'=>0], ['c'=>'#452880','p'=>50], ['c'=>'#2E1A5E','p'=>100] ],
-		],
-		[
-			'slug' => 'schiefer', 'name' => 'Slate',
-			'main' => '#2a3038', 'secondary' => '#4a5568',
-			'gradient' => [ ['c'=>'#2A3038','p'=>0], ['c'=>'#3A4350','p'=>50], ['c'=>'#2A3038','p'=>100] ],
-		],
-		[
-			'slug' => 'rubin',    'name' => 'Ruby',
-			'main' => '#4a1020', 'secondary' => '#8b2a40',
-			'gradient' => [ ['c'=>'#4A1020','p'=>0], ['c'=>'#6A1A30','p'=>50], ['c'=>'#4A1020','p'=>100] ],
-		],
-	];
-}
-
-function skate_get_color_presets(): array {
-	return [
-		[
-			'slug' => 'klassik',  'name' => 'Classic',
-			'main' => '#17263a', 'secondary' => '#d6b36d',
-			'gradient' => [ ['c'=>'#17263A','p'=>0], ['c'=>'#2F4568','p'=>50], ['c'=>'#17263A','p'=>100] ],
-		],
-		[
-			'slug' => 'koralle',  'name' => 'Coral',
-			'main' => '#1a2e3a', 'secondary' => '#e07a5f',
-			'gradient' => [ ['c'=>'#1a2e3a','p'=>0], ['c'=>'#2a4a5a','p'=>50], ['c'=>'#1a2e3a','p'=>100] ],
-		],
-		[
-			'slug' => 'smaragd',  'name' => 'Emerald',
-			'main' => '#1b4332', 'secondary' => '#e05c3a',
-			'gradient' => [ ['c'=>'#1b4332','p'=>0], ['c'=>'#2d6a4f','p'=>50], ['c'=>'#1b4332','p'=>100] ],
-		],
-		[
-			'slug' => 'violett',  'name' => 'Violet',
-			'main' => '#2d1b69', 'secondary' => '#e879a0',
-			'gradient' => [ ['c'=>'#2d1b69','p'=>0], ['c'=>'#4a2f9e','p'=>50], ['c'=>'#2d1b69','p'=>100] ],
-		],
-		[
-			'slug' => 'graphit',  'name' => 'Graphite',
-			'main' => '#2b2b2b', 'secondary' => '#4cc9f0',
-			'gradient' => [ ['c'=>'#2b2b2b','p'=>0], ['c'=>'#444444','p'=>50], ['c'=>'#2b2b2b','p'=>100] ],
-		],
-	];
-}
 
 function skate_get_style_bundles(): array {
-	$sh_soft    = [ 'enabled' => true,  'x' => 0, 'y' => 3, 'blur' => 10, 'spread' => 0,  'color' => '#000000', 'alpha' => 8  ];
-	$sh_classic = [ 'enabled' => true,  'x' => 0, 'y' => 4, 'blur' => 16, 'spread' => 0,  'color' => '#000000', 'alpha' => 12 ];
-	$sh_deep    = [ 'enabled' => true,  'x' => 0, 'y' => 8, 'blur' => 28, 'spread' => -2, 'color' => '#000000', 'alpha' => 20 ];
-	$sh_sharp   = [ 'enabled' => true,  'x' => 4, 'y' => 4, 'blur' => 0,  'spread' => 0,  'color' => '#000000', 'alpha' => 20 ];
+	$sh_sharp = [ 'enabled' => true, 'x' => 4, 'y' => 4, 'blur' => 0, 'spread' => 0, 'color' => '#000000', 'alpha' => 20 ];
+	$sh_none  = [ 'enabled' => false ];
 	return [
 		[
-			'slug'     => 'professional', 'name' => 'Professional', 'icon' => '💼',
-			'main'     => '#17263a',      'secondary' => '#d6b36d',
-			'gradient' => [ ['c'=>'#17263A','p'=>0], ['c'=>'#2F4568','p'=>50], ['c'=>'#17263A','p'=>100] ],
-			'corners'  => [ 'tl' => 0,  'tr' => 0,  'br' => 0,  'bl' => 0  ],
-			'shadow'   => $sh_soft,
+			'slug'         => 'skate',     'name' => 'SkateWP',   'icon' => '🛹',
+			'main'         => '#0D0D0D',   'secondary' => '#FF5500',
+			'gradient'     => [ ['c'=>'#0D0D0D','p'=>0], ['c'=>'#2A2A2A','p'=>50], ['c'=>'#0D0D0D','p'=>100] ],
+			'corners'      => [ 'tl' => 0, 'tr' => 0, 'br' => 0, 'bl' => 0 ],
+			'shadow'       => $sh_sharp,
+			'font_heading' => 'syne',
+			'font_body'    => 'dm-sans',
 		],
 		[
-			'slug'     => 'modern',       'name' => 'Modern',       'icon' => '⚡',
-			'main'     => '#1a2e3a',      'secondary' => '#e07a5f',
-			'gradient' => [ ['c'=>'#1A2E3A','p'=>0], ['c'=>'#2A4A5A','p'=>50], ['c'=>'#1A2E3A','p'=>100] ],
-			'corners'  => [ 'tl' => 10, 'tr' => 10, 'br' => 10, 'bl' => 10 ],
-			'shadow'   => $sh_classic,
+			'slug'         => 'flamingo',  'name' => 'Flamingo',  'icon' => '🪩',
+			'main'         => '#4A4EC8',   'secondary' => '#3DD65C',
+			'gradient'     => [ ['c'=>'#4A4EC8','p'=>0], ['c'=>'#5E62D8','p'=>50], ['c'=>'#4A4EC8','p'=>100] ],
+			'corners'      => [ 'tl' => 0, 'tr' => 0, 'br' => 0, 'bl' => 0 ],
+			'shadow'       => $sh_none,
+			'font_heading' => 'space-grotesk',
+			'font_body'    => 'dm-sans',
 		],
 		[
-			'slug'     => 'elegant',      'name' => 'Elegant',      'icon' => '💎',
-			'main'     => '#2e1a5e',      'secondary' => '#e879a0',
-			'gradient' => [ ['c'=>'#2E1A5E','p'=>0], ['c'=>'#45289E','p'=>50], ['c'=>'#2E1A5E','p'=>100] ],
-			'corners'  => [ 'tl' => 0,  'tr' => 15, 'br' => 0,  'bl' => 15 ],
-			'shadow'   => $sh_deep,
-		],
-		[
-			'slug'     => 'urban',        'name' => 'Urban',        'icon' => '🏙️',
-			'main'     => '#2b2b2b',      'secondary' => '#4cc9f0',
-			'gradient' => [ ['c'=>'#2B2B2B','p'=>0], ['c'=>'#444444','p'=>50], ['c'=>'#2B2B2B','p'=>100] ],
-			'corners'  => [ 'tl' => 0,  'tr' => 0,  'br' => 0,  'bl' => 0  ],
-			'shadow'   => $sh_sharp,
-		],
-		[
-			'slug'     => 'natural',      'name' => 'Natural',      'icon' => '🌿',
-			'main'     => '#1b3a28',      'secondary' => '#7ec86e',
-			'gradient' => [ ['c'=>'#1B3A28','p'=>0], ['c'=>'#2D6A4F','p'=>50], ['c'=>'#1B3A28','p'=>100] ],
-			'corners'  => [ 'tl' => 15, 'tr' => 15, 'br' => 15, 'bl' => 15 ],
-			'shadow'   => $sh_soft,
+			'slug'         => 'infinitum', 'name' => 'Infinitum', 'icon' => '∞',
+			'main'         => '#0ABFEF',   'secondary' => '#E91E8C',
+			'gradient'     => [ ['c'=>'#0ABFEF','p'=>0], ['c'=>'#7B6CF5','p'=>50], ['c'=>'#E91E8C','p'=>100] ],
+			'corners'      => [ 'tl' => 0, 'tr' => 0, 'br' => 0, 'bl' => 0 ],
+			'shadow'       => $sh_none,
+			'font_heading' => 'chakra-petch',
+			'font_body'    => 'barlow',
 		],
 	];
+}
+
+function skate_font_slug_to_name( string $slug ): string {
+	return [
+		'syne'          => 'Syne',
+		'dm-sans'       => 'DM Sans',
+		'space-grotesk' => 'Space Grotesk',
+		'chakra-petch'  => 'Chakra Petch',
+		'barlow'        => 'Barlow',
+	][ $slug ] ?? $slug;
 }
 
 function skate_bundle_is_active( array $bundle ): bool {
 	$cur_main    = strtolower( skate_get_active_color_main() );
 	$cur_sec     = strtolower( skate_get_active_color_secondary() );
 	$cur_corners = skate_get_active_radius_corners();
+	$default_fh  = defined( 'SKATE_DEFAULT_FONT_HEADING' ) ? SKATE_DEFAULT_FONT_HEADING : 'var(--wp--preset--font-family--syne)';
+	$default_fb  = defined( 'SKATE_DEFAULT_FONT_BODY' )    ? SKATE_DEFAULT_FONT_BODY    : 'var(--wp--preset--font-family--dm-sans)';
+	$cur_fh      = function_exists( 'skate_typo_get' ) ? skate_typo_get( 'font_heading', $default_fh ) : $default_fh;
+	$cur_fb      = function_exists( 'skate_typo_get' ) ? skate_typo_get( 'font_body',    $default_fb ) : $default_fb;
+	$bundle_fh   = 'var(--wp--preset--font-family--' . ( $bundle['font_heading'] ?? 'syne' )    . ')';
+	$bundle_fb   = 'var(--wp--preset--font-family--' . ( $bundle['font_body']    ?? 'dm-sans' ) . ')';
 	return strtolower( $bundle['main'] )      === $cur_main
 		&& strtolower( $bundle['secondary'] ) === $cur_sec
-		&& $bundle['corners']                 === $cur_corners;
+		&& $bundle['corners']                 === $cur_corners
+		&& $bundle_fh                         === $cur_fh
+		&& $bundle_fb                         === $cur_fb;
 }
 
 // ----------------------------------------
@@ -709,12 +772,12 @@ add_filter( 'wp_theme_json_data_theme', function ( WP_Theme_JSON_Data $theme_jso
 		if ( ! skate_is_secondary_disabled() ) {
 			$palette[] = [ 'color' => skate_get_active_color_secondary(), 'name' => 'Secondary Color', 'slug' => 'secondary-color' ];
 		}
-		if ( get_option( 'skate_color_black', '' ) !== '' ) {
-			$palette[] = [ 'color' => skate_get_active_color_black(), 'name' => 'Black', 'slug' => 'black' ];
-		}
-		if ( get_option( 'skate_color_light_gray', '' ) !== '' ) {
-			$palette[] = [ 'color' => skate_get_active_color_light_gray(), 'name' => 'Light Gray', 'slug' => 'light-gray' ];
-		}
+		// Always include static colors so the full palette is visible in the editor
+		$palette[] = [ 'color' => skate_get_active_color_muted(),      'name' => 'Muted',      'slug' => 'muted'      ];
+		$palette[] = [ 'color' => skate_get_active_color_muted_dark(), 'name' => 'Muted Dark', 'slug' => 'muted-dark' ];
+		$palette[] = [ 'color' => skate_get_active_color_light_gray(), 'name' => 'Light Gray', 'slug' => 'light-gray' ];
+		$palette[] = [ 'color' => skate_get_active_color_black(),      'name' => 'Black',      'slug' => 'black'      ];
+		$palette[] = [ 'color' => skate_theme_json_color( 'white' ) ?: '#FFFFFF', 'name' => 'White', 'slug' => 'white' ];
 		$theme_json->update_with( [
 			'version'  => 3,
 			'settings' => [ 'color' => [ 'palette' => $palette ] ],
@@ -812,7 +875,7 @@ add_filter( 'wp_theme_json_data_theme', function ( WP_Theme_JSON_Data $theme_jso
 
 // ----------------------------------------
 // 2. Inject CSS on the frontend
-//    Always outputs CSS variables and .pace-radius / .pace-gradient utility classes,
+//    Always outputs CSS variables and .skate-radius / .skate-gradient utility classes,
 //    then the preset-specific CSS.
 // ----------------------------------------
 add_action( 'wp_head', function () {
@@ -823,16 +886,16 @@ add_action( 'wp_head', function () {
 	$spacer         = skate_get_active_spacer();
 	echo '<style id="skate-preset-vars">' .
 		':root{' .
-			'--pace-radius:' . esc_attr( $radius ) . ';' .
-			'--pace-gradient:' . esc_attr( $gradient ) . ';' .
-			'--pace-spacer:' . esc_attr( $spacer ) . ';' .
-			( $shadow_enabled ? '--pace-shadow:' . esc_attr( $shadow ) . ';' : '' ) .
+			'--skate-radius:' . esc_attr( $radius ) . ';' .
+			'--skate-gradient:' . esc_attr( $gradient ) . ';' .
+			'--skate-spacer:' . esc_attr( $spacer ) . ';' .
+			( $shadow_enabled ? '--skate-shadow:' . esc_attr( $shadow ) . ';' : '' ) .
 		'}' .
-		'.pace-radius{border-radius:var(--pace-radius);overflow:hidden}' .
-		'.pace-gradient{background:var(--pace-gradient)}' .
+		'.skate-radius{border-radius:var(--skate-radius);overflow:hidden}' .
+		'.skate-gradient{background:var(--skate-gradient)}' .
 		( $shadow_enabled
-			? '.pace-shadow{box-shadow:var(--pace-shadow)}'
-			  . '.wp-block-button__link,.p-button.p-component{box-shadow:var(--pace-shadow)}'
+			? '.skate-shadow{box-shadow:var(--skate-shadow)}'
+			  . '.wp-block-button__link,.p-button.p-component{box-shadow:var(--skate-shadow)}'
 			: '' ) .
 		( skate_is_mark_disabled()
 			? 'mark,mark.has-secondary-color-color{background:transparent!important;color:var(--wp--preset--color--black)!important}'
@@ -859,6 +922,23 @@ add_action( 'wp_head', function () {
 //     WordPress global-styles-inline-css, so it wins even if user-level
 //     Global Styles override the theme.json filter value.
 // ----------------------------------------
+// Muted color alpha override — runs after WP global-styles-inline-css so it wins.
+// Only fires when the stored muted value has an alpha channel (#rrggbbaa).
+add_action( 'wp_footer', function () {
+	$out = '';
+	$muted_hex = skate_get_active_color_muted();
+	$muted_css = skate_hex_alpha_to_rgba( $muted_hex );
+	if ( $muted_css !== $muted_hex ) {
+		$out .= '--wp--preset--color--muted:' . esc_attr( $muted_css ) . ';';
+	}
+	$muted_dark_hex = skate_get_active_color_muted_dark();
+	$muted_dark_css = skate_hex_alpha_to_rgba( $muted_dark_hex );
+	if ( $muted_dark_css !== $muted_dark_hex ) {
+		$out .= '--wp--preset--color--muted-dark:' . esc_attr( $muted_dark_css ) . ';';
+	}
+	if ( $out ) echo '<style id="skate-muted-alpha">:root{' . $out . '}</style>' . "\n";
+}, 20 );
+
 add_action( 'wp_footer', function () {
 	if ( ! skate_has_custom_button_styles() ) return;
 	$fill_bg   = esc_attr( skate_get_active_btn_fill_bg() );
@@ -892,14 +972,14 @@ add_action( 'enqueue_block_editor_assets', function () {
 	wp_add_inline_style(
 		'wp-edit-blocks',
 		':root{' .
-			'--pace-radius:' . esc_attr( $radius ) . ';' .
-			'--pace-gradient:' . esc_attr( $gradient ) . ';' .
-			'--pace-spacer:' . esc_attr( $spacer ) . ';' .
-			( $shadow_enabled ? '--pace-shadow:' . esc_attr( $shadow ) . ';' : '' ) .
+			'--skate-radius:' . esc_attr( $radius ) . ';' .
+			'--skate-gradient:' . esc_attr( $gradient ) . ';' .
+			'--skate-spacer:' . esc_attr( $spacer ) . ';' .
+			( $shadow_enabled ? '--skate-shadow:' . esc_attr( $shadow ) . ';' : '' ) .
 		'}' .
-		'.pace-radius{border-radius:var(--pace-radius);overflow:hidden}' .
-		'.pace-gradient{background:var(--pace-gradient)}' .
-		( $shadow_enabled ? '.pace-shadow{box-shadow:var(--pace-shadow)}' : '' ) .
+		'.skate-radius{border-radius:var(--skate-radius);overflow:hidden}' .
+		'.skate-gradient{background:var(--skate-gradient)}' .
+		( $shadow_enabled ? '.skate-shadow{box-shadow:var(--skate-shadow)}' : '' ) .
 		( skate_is_mark_disabled()
 			? 'mark,mark.has-secondary-color-color{background:transparent!important;color:var(--wp--preset--color--black)!important}'
 			: '' ) .
@@ -927,9 +1007,91 @@ add_action( 'enqueue_block_editor_assets', function () {
 				'border-width:' . esc_attr( skate_get_active_btn_outline_border_width() ) . 'px;' .
 				'border-style:solid;' .
 			'}'
-			: '' )
+			: '' ) .
+		// Muted / muted-dark alpha overrides — same pattern as wp_footer hook but for editor preview
+		( function () {
+			$out = '';
+			$hex = skate_get_active_color_muted();
+			$css = skate_hex_alpha_to_rgba( $hex );
+			if ( $css !== $hex ) $out .= '--wp--preset--color--muted:' . esc_attr( $css ) . ';';
+			$hex2 = skate_get_active_color_muted_dark();
+			$css2 = skate_hex_alpha_to_rgba( $hex2 );
+			if ( $css2 !== $hex2 ) $out .= '--wp--preset--color--muted-dark:' . esc_attr( $css2 ) . ';';
+			return $out ? ':root{' . $out . '}' : '';
+		} )()
 	);
 } );
+
+add_action( 'wp_enqueue_scripts', function () {
+	if ( ! skate_is_parallax_enabled() ) return;
+	$path = get_template_directory() . '/assets/js/parallax.js';
+	if ( ! file_exists( $path ) ) return;
+	wp_enqueue_script(
+		'skate-parallax',
+		get_template_directory_uri() . '/assets/js/parallax.js',
+		[], filemtime( $path ), true
+	);
+} );
+
+add_action( 'wp_head', function () {
+	if ( ! skate_is_parallax_enabled() ) return;
+	$config = [
+		'speed'   => skate_get_parallax_speed(),
+		'fade'    => skate_is_parallax_fade_enabled(),
+		'fadeEnd' => skate_get_parallax_fade_end(),
+	];
+	echo '<script id="skate-parallax-config">window.skateParallax='
+		. wp_json_encode( $config ) . ';</script>' . "\n";
+}, 5 );
+
+add_action( 'wp_enqueue_scripts', function () {
+	if ( ! skate_is_hero_fx_enabled() ) return;
+	$path = get_template_directory() . '/assets/js/hero-fx.js';
+	if ( ! file_exists( $path ) ) return;
+	wp_enqueue_script(
+		'skate-hero-fx',
+		get_template_directory_uri() . '/assets/js/hero-fx.js',
+		[], filemtime( $path ), true
+	);
+} );
+
+add_action( 'wp_head', function () {
+	if ( ! skate_is_hero_fx_enabled() ) return;
+	echo '<script id="skate-hero-fx-config">window.skateHeroFx='
+		. wp_json_encode( [
+			'effect'      => skate_get_hero_fx_mode(),
+			'intensity'   => skate_get_hero_fx_intensity(),
+			'radius'      => skate_get_hero_fx_radius(),
+		] ) . ';</script>' . "\n";
+}, 5 );
+
+add_action( 'wp_enqueue_scripts', function () {
+	if ( ! skate_is_cursor_enabled() ) return;
+	$path = get_template_directory() . '/assets/js/cursor.js';
+	if ( ! file_exists( $path ) ) return;
+	wp_enqueue_script( 'skate-cursor', get_template_directory_uri() . '/assets/js/cursor.js', [], filemtime( $path ), true );
+} );
+
+add_action( 'wp_head', function () {
+	if ( ! skate_is_cursor_enabled() ) return;
+	$style = skate_get_cursor_style();
+	echo '<script id="skate-cursor-config">window.skateCursor=' . wp_json_encode( [ 'style' => $style ] ) . ';</script>' . "\n";
+	// Inline CSS per style — injected early so cursor elements are styled before JS runs
+	// Sandwich technique: dark element + white box-shadow = visible on any bg, no mix-blend-mode bugs
+	$css = '
+.skate-cur,.skate-cur-dot,.skate-cur-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:999999;border-radius:50%;will-change:transform;backface-visibility:hidden;}
+*{cursor:none!important;}
+a,button,[role="button"],input,select,textarea,label[for]{cursor:auto!important;}';
+	if ( $style === 'circle' ) {
+		$css .= '
+.skate-cur{width:38px;height:38px;margin:-19px 0 0 -19px;border:1.5px solid #111;box-shadow:0 0 0 1.5px rgba(255,255,255,.85);}';
+	} elseif ( $style === 'dot-ring' ) {
+		$css .= '
+.skate-cur-dot{width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:#111;box-shadow:0 0 0 1.5px rgba(255,255,255,.85);}
+.skate-cur-ring{width:38px;height:38px;margin:-19px 0 0 -19px;border:1.5px solid #111;box-shadow:0 0 0 1.5px rgba(255,255,255,.75);}';
+	}
+	echo '<style id="skate-cursor-css">' . $css . '</style>' . "\n";
+}, 5 );
 
 // ----------------------------------------
 // Admin UI (only in admin area)
@@ -939,7 +1101,7 @@ if ( ! is_admin() ) return;
 add_action( 'admin_menu', function () {
 	add_submenu_page(
 		'skate',
-		__( 'Skate – Design', 'skate' ),
+		__( 'SkateWP – Design', 'skate' ),
 		__( 'Design', 'skate' ),
 		'edit_theme_options',
 		'skate-design',
@@ -989,46 +1151,13 @@ add_action( 'admin_init', function () {
 				update_option( 'skate_shadow_color',   $sp['color'] );
 				update_option( 'skate_shadow_alpha',   $sp['alpha'] );
 			}
-		}
-		wp_safe_redirect( $redirect ); exit;
-	}
-
-	// Color preset
-	if ( isset( $_POST['skate_presets_nonce'] ) && wp_verify_nonce( $_POST['skate_presets_nonce'], 'skate_apply_color_preset' ) ) {
-		$slug       = sanitize_key( $_POST['skate_preset_slug'] ?? '' );
-		$preset_map = array_column( skate_get_color_presets(), null, 'slug' );
-		if ( isset( $preset_map[ $slug ] ) ) {
-			$p = $preset_map[ $slug ];
-			$default_main = skate_theme_json_color( 'main-color' ) ?: SKATE_DEFAULT_COLOR_MAIN;
-			strtolower( $p['main'] ) !== strtolower( $default_main )
-				? update_option( 'skate_color_main', $p['main'] )
-				: delete_option( 'skate_color_main' );
-			$default_sec = skate_theme_json_color( 'secondary-color' ) ?: SKATE_DEFAULT_COLOR_SECONDARY;
-			strtolower( $p['secondary'] ) !== strtolower( $default_sec )
-				? update_option( 'skate_color_secondary', $p['secondary'] )
-				: delete_option( 'skate_color_secondary' );
-			update_option( 'skate_gradient_stops', wp_json_encode( $p['gradient'] ) );
-			delete_option( 'skate_gradient_angle' );
-		}
-		wp_safe_redirect( $redirect ); exit;
-	}
-
-	// Mono preset
-	if ( isset( $_POST['skate_mono_nonce'] ) && wp_verify_nonce( $_POST['skate_mono_nonce'], 'skate_apply_mono_preset' ) ) {
-		$slug     = sanitize_key( $_POST['skate_mono_slug'] ?? '' );
-		$mono_map = array_column( skate_get_mono_presets(), null, 'slug' );
-		if ( isset( $mono_map[ $slug ] ) ) {
-			$p = $mono_map[ $slug ];
-			$default_main = skate_theme_json_color( 'main-color' ) ?: SKATE_DEFAULT_COLOR_MAIN;
-			strtolower( $p['main'] ) !== strtolower( $default_main )
-				? update_option( 'skate_color_main', $p['main'] )
-				: delete_option( 'skate_color_main' );
-			$default_sec = skate_theme_json_color( 'secondary-color' ) ?: SKATE_DEFAULT_COLOR_SECONDARY;
-			strtolower( $p['secondary'] ) !== strtolower( $default_sec )
-				? update_option( 'skate_color_secondary', $p['secondary'] )
-				: delete_option( 'skate_color_secondary' );
-			update_option( 'skate_gradient_stops', wp_json_encode( $p['gradient'] ) );
-			delete_option( 'skate_gradient_angle' );
+			$fh = sanitize_key( $b['font_heading'] ?? 'syne' );
+			$fb = sanitize_key( $b['font_body']    ?? 'dm-sans' );
+			update_option( 'skate_typo_font_heading', "var(--wp--preset--font-family--{$fh})" );
+			update_option( 'skate_typo_font_body',    "var(--wp--preset--font-family--{$fb})" );
+			if ( class_exists( 'WP_Theme_JSON_Resolver' ) ) {
+				WP_Theme_JSON_Resolver::clean_cached_data();
+			}
 		}
 		wp_safe_redirect( $redirect ); exit;
 	}
@@ -1096,6 +1225,56 @@ add_action( 'admin_init', function () {
 		update_option( 'skate_shadow_alpha',   $sp['alpha'] );
 		wp_safe_redirect( $redirect ); exit;
 	}
+
+	if ( isset( $_POST['skate_effects_nonce'] )
+		&& wp_verify_nonce( $_POST['skate_effects_nonce'], 'skate_save_effects' ) ) {
+
+		$redirect = admin_url( 'admin.php?page=skate-design&tab=effects&saved=1' );
+
+		if ( ( $_POST['skate_parallax_enabled'] ?? '' ) === '1' ) {
+			update_option( 'skate_parallax_enabled', '1' );
+		} else {
+			delete_option( 'skate_parallax_enabled' );
+		}
+
+		$speed = max( 1.1, min( 3.0, (float) ( $_POST['skate_parallax_speed'] ?? SKATE_DEFAULT_PARALLAX_SPEED ) ) );
+		( $speed !== (float) SKATE_DEFAULT_PARALLAX_SPEED )
+			? update_option( 'skate_parallax_speed', $speed )
+			: delete_option( 'skate_parallax_speed' );
+
+		if ( ( $_POST['skate_parallax_fade'] ?? '' ) === '1' ) {
+			update_option( 'skate_parallax_fade', '1' );
+		} else {
+			delete_option( 'skate_parallax_fade' );
+		}
+
+		$fade_end = max( 20, min( 100, (int) ( $_POST['skate_parallax_fade_end'] ?? SKATE_DEFAULT_PARALLAX_FADE_END ) ) );
+		( $fade_end !== SKATE_DEFAULT_PARALLAX_FADE_END )
+			? update_option( 'skate_parallax_fade_end', $fade_end )
+			: delete_option( 'skate_parallax_fade_end' );
+
+		$hero_mode = sanitize_key( $_POST['skate_hero_fx_mode'] ?? '' );
+		if ( in_array( $hero_mode, [ 'off', 'distortion', 'glitch', 'rgb' ], true ) ) {
+			update_option( 'skate_hero_fx_mode', $hero_mode );
+		}
+
+		$hero_intensity = max( 10, min( 100, (int) ( $_POST['skate_hero_fx_intensity'] ?? SKATE_DEFAULT_HERO_FX_INTENSITY ) ) );
+		( $hero_intensity !== SKATE_DEFAULT_HERO_FX_INTENSITY )
+			? update_option( 'skate_hero_fx_intensity', $hero_intensity )
+			: delete_option( 'skate_hero_fx_intensity' );
+
+		$hero_radius = max( 10, min( 100, (int) ( $_POST['skate_hero_fx_radius'] ?? SKATE_DEFAULT_HERO_FX_RADIUS ) ) );
+		( $hero_radius !== SKATE_DEFAULT_HERO_FX_RADIUS )
+			? update_option( 'skate_hero_fx_radius', $hero_radius )
+			: delete_option( 'skate_hero_fx_radius' );
+
+		$cursor_style = sanitize_key( $_POST['skate_cursor_style'] ?? '' );
+		if ( in_array( $cursor_style, [ 'off', 'circle', 'dot-ring' ], true ) ) {
+			update_option( 'skate_cursor_style', $cursor_style );
+		}
+
+		wp_safe_redirect( $redirect ); exit;
+	}
 } );
 
 // ----------------------------------------
@@ -1103,7 +1282,7 @@ add_action( 'admin_init', function () {
 // ----------------------------------------
 function skate_render_design_page(): void {
 	if ( ! current_user_can( 'edit_theme_options' ) ) return;
-	$valid_tabs = [ 'presets', 'tuner', 'buttons' ];
+	$valid_tabs = [ 'presets', 'tuner', 'buttons', 'effects' ];
 	$active_tab = in_array( $_GET['tab'] ?? '', $valid_tabs, true ) ? $_GET['tab'] : 'presets';
 	?>
 	<style>
@@ -1137,12 +1316,16 @@ function skate_render_design_page(): void {
 			   class="skate-design-tab<?= $active_tab === 'tuner' ? ' is-active' : '' ?>">Tuner</a>
 			<a href="<?= esc_url( admin_url( 'admin.php?page=skate-design&tab=buttons' ) ) ?>"
 			   class="skate-design-tab<?= $active_tab === 'buttons' ? ' is-active' : '' ?>">Buttons</a>
+			<a href="<?= esc_url( admin_url( 'admin.php?page=skate-design&tab=effects' ) ) ?>"
+			   class="skate-design-tab<?= $active_tab === 'effects' ? ' is-active' : '' ?>">Effects</a>
 		</nav>
 	<?php
 	if ( $active_tab === 'presets' ) {
 		skate_render_color_presets_page();
 	} elseif ( $active_tab === 'buttons' ) {
 		skate_render_buttons_tuner_page();
+	} elseif ( $active_tab === 'effects' ) {
+		skate_render_effects_page();
 	} else {
 		skate_render_master_tuner_page();
 	}
@@ -1196,6 +1379,9 @@ function skate_render_color_presets_page(): void {
 			. '</span>'
 			. '</span>';
 		echo '<span class="skate-preset-name">' . esc_html( $bundle['name'] ) . '</span>';
+		$fh_name = skate_font_slug_to_name( $bundle['font_heading'] ?? 'syne' );
+		$fb_name = skate_font_slug_to_name( $bundle['font_body']    ?? 'dm-sans' );
+		echo '<span class="skate-bundle-fonts">' . esc_html( $fh_name . ' / ' . $fb_name ) . '</span>';
 		echo '</button>';
 		echo '</form>';
 	}
@@ -1211,49 +1397,6 @@ function skate_render_color_presets_page(): void {
 	echo '<span class="skate-preset-name">' . esc_html__( 'Randomize', 'skate' ) . '</span>';
 	echo '</button>';
 	echo '</form>';
-	echo '</div>';
-
-	echo '<h2 class="skate-presets-section-title">' . esc_html__( 'Color Presets', 'skate' ) . '</h2>';
-
-	echo '<div class="skate-color-presets-page">';
-	foreach ( skate_get_color_presets() as $preset ) {
-		$active = strtolower( $preset['main'] ) === $cur_main
-			&& strtolower( $preset['secondary'] ) === $cur_sec;
-
-		echo '<form method="post" class="skate-preset-form">';
-		wp_nonce_field( 'skate_apply_color_preset', 'skate_presets_nonce' );
-		echo '<input type="hidden" name="skate_preset_slug" value="' . esc_attr( $preset['slug'] ) . '">';
-		echo '<button type="submit" class="skate-color-preset-card' . ( $active ? ' is-active' : '' ) . '">';
-		echo '<span class="skate-preset-swatch">'
-			. '<span style="background:' . esc_attr( $preset['main'] ) . '"></span>'
-			. '<span style="background:' . esc_attr( $preset['secondary'] ) . '"></span>'
-			. '</span>';
-		echo '<span class="skate-preset-name">' . esc_html( $preset['name'] ) . '</span>';
-		echo '</button>';
-		echo '</form>';
-	}
-	echo '</div>';
-
-	// ── Monochromatic Presets ────────────────────────────────
-	echo '<h2 class="skate-presets-section-title">' . esc_html__( 'Monochromatic', 'skate' ) . '</h2>';
-
-	echo '<div class="skate-color-presets-page">';
-	foreach ( skate_get_mono_presets() as $preset ) {
-		$active = strtolower( $preset['main'] ) === $cur_main
-			&& strtolower( $preset['secondary'] ) === $cur_sec;
-
-		echo '<form method="post" class="skate-preset-form">';
-		wp_nonce_field( 'skate_apply_mono_preset', 'skate_mono_nonce' );
-		echo '<input type="hidden" name="skate_mono_slug" value="' . esc_attr( $preset['slug'] ) . '">';
-		echo '<button type="submit" class="skate-color-preset-card' . ( $active ? ' is-active' : '' ) . '">';
-		echo '<span class="skate-preset-swatch">'
-			. '<span style="background:' . esc_attr( $preset['main'] ) . '"></span>'
-			. '<span style="background:' . esc_attr( $preset['secondary'] ) . '"></span>'
-			. '</span>';
-		echo '<span class="skate-preset-name">' . esc_html( $preset['name'] ) . '</span>';
-		echo '</button>';
-		echo '</form>';
-	}
 	echo '</div>';
 
 	// ── Border Presets ──────────────────────────────────────
@@ -1343,6 +1486,10 @@ function skate_render_color_presets_page(): void {
 			.skate-color-preset-card .skate-preset-swatch > span { flex: 1; height: 100%; display: block; }
 			.skate-color-preset-card .skate-preset-name {
 				font-size: 12px; font-weight: 600; color: #1d2327;
+			}
+			.skate-bundle-fonts {
+				font-size: 10px; font-weight: 400; color: #8c8f94;
+				white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px;
 			}
 
 			/* Border preset cards */
@@ -1475,6 +1622,22 @@ function skate_render_master_tuner_page(): void {
 			update_option( 'skate_color_light_gray', $color_light_gray );
 		} else {
 			delete_option( 'skate_color_light_gray' );
+		}
+
+		$color_muted = skate_sanitize_hex_color_alpha( $_POST['skate_color_muted'] ?? '' );
+		$default_muted = skate_theme_json_color( 'muted' ) ?: SKATE_DEFAULT_COLOR_MUTED;
+		if ( $color_muted && strtolower( $color_muted ) !== strtolower( $default_muted ) ) {
+			update_option( 'skate_color_muted', $color_muted );
+		} else {
+			delete_option( 'skate_color_muted' );
+		}
+
+		$color_muted_dark = skate_sanitize_hex_color_alpha( $_POST['skate_color_muted_dark'] ?? '' );
+		$default_muted_dark = skate_theme_json_color( 'muted-dark' ) ?: SKATE_DEFAULT_COLOR_MUTED_DARK;
+		if ( $color_muted_dark && strtolower( $color_muted_dark ) !== strtolower( $default_muted_dark ) ) {
+			update_option( 'skate_color_muted_dark', $color_muted_dark );
+		} else {
+			delete_option( 'skate_color_muted_dark' );
 		}
 
 		// Secondary color toggle: skate_secondary_show=1 means enabled, 0 means disabled
@@ -1645,7 +1808,7 @@ function skate_render_master_tuner_page(): void {
 	echo '<button type="button" class="skate-br-lock' . ( $br_locked ? ' is-locked' : '' ) . '" id="skate-br-lock" title="Link corners">'
 		. ( $br_locked ? '🔒' : '🔓' ) . '</button>';
 	echo '</div>';
-	echo '<span class="skate-var-hint"><code>--pace-radius</code> · class <code>.pace-radius</code></span>';
+	echo '<span class="skate-var-hint"><code>--skate-radius</code> · class <code>.skate-radius</code></span>';
 	echo '</div>';
 	echo '</div>';
 
@@ -1721,6 +1884,34 @@ function skate_render_master_tuner_page(): void {
 	echo '</div>';
 	echo '</div>'; // .skate-tune-row
 
+	// Muted color (--wp--preset--color--muted)
+	$cur_muted = skate_get_active_color_muted();
+
+	echo '<div class="skate-tune-row">';
+	echo '<label class="skate-tune-label">' . esc_html__( 'Muted', 'skate' ) . '</label>';
+	echo '<div class="skate-tune-control">';
+	echo '<div class="skate-color-pair">';
+	echo '<input type="color" id="skate-color-muted" value="' . esc_attr( substr( $cur_muted, 0, 7 ) ) . '">';
+	echo '<input type="text" class="skate-hex-input" name="skate_color_muted" data-color-id="skate-color-muted" value="' . esc_attr( $cur_muted ) . '" maxlength="9" placeholder="#rrggbbaa">';
+	echo '</div>';
+	echo '<span class="skate-tune-hint description"><code>--wp--preset--color--muted</code></span>';
+	echo '</div>';
+	echo '</div>'; // .skate-tune-row
+
+	// Muted Dark color (--wp--preset--color--muted-dark)
+	$cur_muted_dark = skate_get_active_color_muted_dark();
+
+	echo '<div class="skate-tune-row">';
+	echo '<label class="skate-tune-label">' . esc_html__( 'Muted Dark', 'skate' ) . '</label>';
+	echo '<div class="skate-tune-control">';
+	echo '<div class="skate-color-pair">';
+	echo '<input type="color" id="skate-color-muted-dark" value="' . esc_attr( substr( $cur_muted_dark, 0, 7 ) ) . '">';
+	echo '<input type="text" class="skate-hex-input" name="skate_color_muted_dark" data-color-id="skate-color-muted-dark" value="' . esc_attr( $cur_muted_dark ) . '" maxlength="9" placeholder="#rrggbbaa">';
+	echo '</div>';
+	echo '<span class="skate-tune-hint description"><code>--wp--preset--color--muted-dark</code></span>';
+	echo '</div>';
+	echo '</div>'; // .skate-tune-row
+
 	// Mark headings toggle
 	$mark_disabled = skate_is_mark_disabled();
 
@@ -1753,7 +1944,7 @@ function skate_render_master_tuner_page(): void {
 		echo '</label>';
 	}
 	echo '</div>';
-	echo '<span class="skate-var-hint"><code>--pace-spacer</code></span>';
+	echo '<span class="skate-var-hint"><code>--skate-spacer</code></span>';
 	echo '</div>';
 	echo '</div>';
 
@@ -1848,8 +2039,8 @@ function skate_render_master_tuner_page(): void {
 	echo '<div id="skate-shadow-preview" class="skate-shadow-preview"></div>';
 	echo '</div>';
 
-	echo '<span class="skate-var-hint"><code>--wp--preset--shadow--{slug}</code> · <code>--pace-shadow</code> · class <code>.pace-shadow</code></span>';
-	echo '<span class="skate-tune-hint" style="margin-top:6px;display:block;">To exclude a block (e.g. an image) from the global shadow, add the CSS class <code>.pace-no-shadow</code> to it in the block\'s Advanced settings.</span>';
+	echo '<span class="skate-var-hint"><code>--wp--preset--shadow--{slug}</code> · <code>--skate-shadow</code> · class <code>.skate-shadow</code></span>';
+	echo '<span class="skate-tune-hint" style="margin-top:6px;display:block;">To exclude a block (e.g. an image) from the global shadow, add the CSS class <code>.skate-no-shadow</code> to it in the block\'s Advanced settings.</span>';
 
 	echo '</div>'; // .skate-shadow-fields
 	echo '</div>'; // .skate-tune-control--shadow
@@ -1905,7 +2096,7 @@ function skate_render_master_tuner_page(): void {
 	echo '<div id="skate-gradient-preview" class="skate-gradient-preview"></div>';
 	echo '</div>';
 
-	echo '<span class="skate-var-hint"><code>--pace-gradient</code> · class <code>.pace-gradient</code></span>';
+	echo '<span class="skate-var-hint"><code>--skate-gradient</code> · class <code>.skate-gradient</code></span>';
 
 	echo '</div>'; // .skate-tune-control--gradient
 	echo '</div>'; // .skate-tune-row--gradient
@@ -2296,7 +2487,7 @@ function skate_print_preset_assets(): void {
 			});
 
 			// ── Hex input ↔ color picker sync ────────────────────────────
-			var HEX_RE = /^#[0-9a-fA-F]{6}$/;
+			var HEX_RE = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/;
 
 			function initHexSync(colorInput, hexInput) {
 				// color → hex
@@ -2309,7 +2500,7 @@ function skate_print_preset_assets(): void {
 					var v = hexInput.value.trim();
 					if (!v.startsWith('#')) v = '#' + v;
 					if (HEX_RE.test(v)) {
-						colorInput.value = v;
+						colorInput.value = v.substring(0, 7); // color picker only accepts #rrggbb
 						hexInput.value = v;
 						updatePreview();
 					}
@@ -2913,7 +3104,7 @@ function skate_render_buttons_tuner_page(): void {
 		font-size: 13px;
 		font-weight: 700;
 		text-decoration: none;
-		border-radius: var(--pace-radius, 0px);
+		border-radius: var(--skate-radius, 0px);
 		transition: background .15s, color .15s, border-color .15s;
 		cursor: pointer;
 		white-space: nowrap;
@@ -3004,4 +3195,278 @@ function skate_render_buttons_tuner_page(): void {
 	}());
 	</script>
 	<?php
+}
+
+// ----------------------------------------
+// Effects & Animations tab
+// ----------------------------------------
+function skate_render_effects_page(): void {
+	if ( ! current_user_can( 'edit_theme_options' ) ) return;
+
+	$saved             = ! empty( $_GET['saved'] );
+	$enabled           = skate_is_parallax_enabled();
+	$speed             = skate_get_parallax_speed();
+	$fade              = skate_is_parallax_fade_enabled();
+	$fade_end          = skate_get_parallax_fade_end();
+	$hero_fx_mode         = skate_get_hero_fx_mode();
+	$hero_fx_enabled      = skate_is_hero_fx_enabled();
+	$hero_fx_intensity    = skate_get_hero_fx_intensity();
+	$hero_fx_radius       = skate_get_hero_fx_radius();
+	$cursor_style      = skate_get_cursor_style();
+
+	skate_print_preset_assets();
+	?>
+	<style>
+	.skate-effects-wrap { max-width: none !important; }
+	.skate-effects-layout {
+		display: flex;
+		align-items: flex-start;
+		gap: 20px;
+	}
+	.skate-effects-main { flex: 7; min-width: 0; }
+	.skate-effects-sidebar { flex: 3; min-width: 220px; position: sticky; top: 32px; }
+	.skate-effects-layout .skate-tune-section { max-width: none; margin-bottom: 0; }
+	.skate-effects-actions { display: flex; gap: 8px; padding: 16px 0 8px; }
+	.skate-effects-range { width: 160px; accent-color: var(--skate-accent, #3ecfca); cursor: pointer; vertical-align: middle; }
+	.skate-effects-output { font-size: 13px; font-weight: 600; color: #1d2327; min-width: 36px; }
+	.skate-effects-usage-body { padding: 16px 24px; display: flex; flex-direction: column; gap: 10px; }
+	.skate-effects-usage-step { font-size: 13px; color: #50575e; line-height: 1.5; margin: 0; }
+	.skate-effects-usage-note { color: #8c8f94; font-size: 12px; border-top: 1px solid #f4f4f5; padding-top: 10px; margin-top: 2px; }
+	.skate-effects-class-pill {
+		cursor: pointer;
+		user-select: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 3px 8px;
+		border-radius: 4px;
+		font-size: 11.5px;
+		font-family: monospace;
+		background: var(--skate-accent-bg);
+		color: var(--skate-accent);
+		border: 1px solid var(--skate-accent-glow);
+		transition: background .15s, color .15s, border-color .15s;
+	}
+	.skate-effects-class-pill::after { content: '⎘'; font-size: 11px; opacity: .5; }
+	.skate-effects-class-pill:hover { background: var(--skate-accent-glow); border-color: var(--skate-accent); }
+	.skate-effects-class-pill:hover::after { opacity: 1; }
+	.skate-effects-class-pill.skate-copied { background: #d7f5e3 !important; color: #1a7942 !important; border-color: #a3e6c1 !important; }
+	.skate-effects-class-pill.skate-copied::after { content: '✓'; opacity: 1; }
+	</style>
+	<?php
+
+	echo '<div class="skate-presets-wrap skate-effects-wrap">';
+
+	if ( $saved ) {
+		echo '<div class="notice notice-success is-dismissible"><p>'
+			. esc_html__( 'Effects settings saved.', 'skate' )
+			. '</p></div>';
+	}
+
+	echo '<form method="post" action="">';
+	wp_nonce_field( 'skate_save_effects', 'skate_effects_nonce' );
+	?>
+	<div class="skate-effects-layout">
+
+		<!-- ── Settings (main) ── -->
+		<div class="skate-effects-main">
+			<div class="skate-tune-section">
+				<div class="skate-tune-head">
+					<h3 class="skate-tune-title">Parallax Scroll</h3>
+					<p class="skate-tune-desc">Scroll-driven movement &amp; fade for any element.</p>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-parallax-enabled">Enable</label>
+					<div class="skate-tune-control">
+						<input type="hidden" name="skate_parallax_enabled" value="0">
+						<label class="skate-secondary-toggle-label" for="skate-parallax-enabled">
+							<input type="checkbox" id="skate-parallax-enabled" name="skate_parallax_enabled" value="1"<?= checked( $enabled, true, false ) ?>>
+							<span class="skate-toggle-track"><span class="skate-toggle-thumb"></span></span>
+						</label>
+					</div>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-parallax-speed">Speed</label>
+					<div class="skate-tune-control">
+						<input type="range" id="skate-parallax-speed" name="skate_parallax_speed"
+							min="1.1" max="3.0" step="0.1" value="<?= esc_attr( $speed ) ?>"
+							class="skate-effects-range">
+						<output class="skate-effects-output" id="skate-parallax-speed-output"><?= esc_html( number_format( $speed, 1 ) ) ?>x</output>
+					</div>
+					<span class="skate-tune-hint">1.1 subtle — 3.0 dramatic</span>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-parallax-fade">Fade Out</label>
+					<div class="skate-tune-control">
+						<input type="hidden" name="skate_parallax_fade" value="0">
+						<label class="skate-secondary-toggle-label" for="skate-parallax-fade">
+							<input type="checkbox" id="skate-parallax-fade" name="skate_parallax_fade" value="1"<?= checked( $fade, true, false ) ?>>
+							<span class="skate-toggle-track"><span class="skate-toggle-thumb"></span></span>
+						</label>
+					</div>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-parallax-fade-end">Fade Distance</label>
+					<div class="skate-tune-control">
+						<input type="range" id="skate-parallax-fade-end" name="skate_parallax_fade_end"
+							min="20" max="100" step="5" value="<?= esc_attr( $fade_end ) ?>"
+							class="skate-effects-range">
+						<output class="skate-effects-output" id="skate-parallax-fade-end-output"><?= esc_html( $fade_end ) ?>%</output>
+					</div>
+					<span class="skate-tune-hint">% of viewport height before opacity hits 0</span>
+				</div>
+			</div><!-- /.skate-tune-section -->
+
+			<div class="skate-tune-section" style="margin-top:16px">
+				<div class="skate-tune-head">
+					<h3 class="skate-tune-title">Hero Effect</h3>
+					<p class="skate-tune-desc">Mouse-driven WebGL effect on hero sections.</p>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-hero-fx-mode">Effect</label>
+					<div class="skate-tune-control">
+						<select id="skate-hero-fx-mode" name="skate_hero_fx_mode" style="max-width:180px">
+							<option value="off"<?= selected( $hero_fx_mode, 'off', false ) ?>>Off</option>
+							<option value="distortion"<?= selected( $hero_fx_mode, 'distortion', false ) ?>>Distortion</option>
+							<option value="glitch"<?= selected( $hero_fx_mode, 'glitch', false ) ?>>Glitch</option>
+							<option value="rgb"<?= selected( $hero_fx_mode, 'rgb', false ) ?>>RGB Split</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-hero-fx-intensity">Intensity</label>
+					<div class="skate-tune-control">
+						<input type="range" id="skate-hero-fx-intensity" name="skate_hero_fx_intensity"
+							min="10" max="100" step="5" value="<?= esc_attr( $hero_fx_intensity ) ?>"
+							class="skate-effects-range">
+						<output class="skate-effects-output" id="skate-hero-fx-intensity-out"><?= esc_html( $hero_fx_intensity ) ?></output>
+					</div>
+					<span class="skate-tune-hint">10 subtle — 100 dramatic warp</span>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-hero-fx-radius">Radius</label>
+					<div class="skate-tune-control">
+						<input type="range" id="skate-hero-fx-radius" name="skate_hero_fx_radius"
+							min="10" max="100" step="5" value="<?= esc_attr( $hero_fx_radius ) ?>"
+							class="skate-effects-range">
+						<output class="skate-effects-output" id="skate-hero-fx-radius-out"><?= esc_html( $hero_fx_radius ) ?></output>
+					</div>
+					<span class="skate-tune-hint">10 tight — 100 wide spread</span>
+				</div>
+
+				<p class="skate-tune-hint" style="padding:10px 24px 14px;display:flex;align-items:flex-start;gap:6px;line-height:1.5;border-top:1px solid #f0f0f1;margin:0">
+					<span style="font-size:14px;flex-shrink:0;margin-top:1px">⚠</span>
+					Requires a <strong>background image or video</strong> on the block. Flat colors and gradients fall back to a spotlight effect.
+				</p>
+			</div><!-- /.skate-tune-section -->
+
+			<div class="skate-tune-section" style="margin-top:16px">
+				<div class="skate-tune-head">
+					<h3 class="skate-tune-title">Cursor</h3>
+					<p class="skate-tune-desc">Replace the default pointer with a custom cursor.</p>
+				</div>
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-cursor-style">Style</label>
+					<div class="skate-tune-control">
+						<select id="skate-cursor-style" name="skate_cursor_style" style="max-width:180px">
+							<option value="off"<?= selected( $cursor_style, 'off', false ) ?>>Off</option>
+							<option value="circle"<?= selected( $cursor_style, 'circle', false ) ?>>Circle</option>
+							<option value="dot-ring"<?= selected( $cursor_style, 'dot-ring', false ) ?>>Dot + Ring</option>
+						</select>
+					</div>
+				</div>
+				<p class="skate-tune-hint" style="padding:10px 24px 14px;display:flex;align-items:flex-start;gap:6px;line-height:1.5;border-top:1px solid #f0f0f1;margin:0">
+					<span style="font-size:14px;flex-shrink:0;margin-top:1px">⚠</span>
+					Hides the native cursor on the entire site. Visible on any background — dark ring with white outline.
+				</p>
+			</div><!-- /.skate-tune-section -->
+
+			<div class="skate-effects-actions">
+				<input type="submit" class="button-primary" value="<?= esc_attr__( 'Save Effects', 'skate' ) ?>">
+			</div>
+		</div><!-- /.skate-effects-main -->
+
+		<!-- ── How to use (sidebar) ── -->
+		<div class="skate-tune-section skate-effects-sidebar">
+			<div class="skate-tune-head">
+				<h3 class="skate-tune-title">How to use</h3>
+				<p class="skate-tune-desc">Apply to any block via the editor.</p>
+			</div>
+			<div class="skate-effects-usage-body">
+				<p class="skate-effects-usage-step">1. Select a block in Gutenberg and open its settings sidebar.</p>
+				<p class="skate-effects-usage-step">2. Under <strong>Advanced → Additional CSS class</strong>, add:</p>
+				<code class="skate-effects-class-pill">skate-parallax</code>
+				<p class="skate-effects-usage-step skate-effects-usage-note">Respects <em>prefers-reduced-motion</em> — the effect is automatically skipped for users who prefer reduced motion.</p>
+				<code class="skate-effects-class-pill">skate-hero-fx</code>
+				<p class="skate-effects-usage-step skate-effects-usage-note">Mouse distortion: apply to a Cover block with a background image. The effect warps the image pixels at the cursor — not an overlay.</p>
+			</div>
+		</div><!-- /.skate-effects-sidebar -->
+
+	</div><!-- /.skate-effects-layout -->
+
+	</form>
+	</div><!-- /.skate-effects-wrap -->
+	<?php
+
+	add_action( 'admin_print_footer_scripts', function () { ?>
+	<script>
+	(function () {
+		var speedRange  = document.getElementById('skate-parallax-speed');
+		var speedOutput = document.getElementById('skate-parallax-speed-output');
+		if (speedRange && speedOutput) {
+			speedRange.addEventListener('input', function () {
+				speedOutput.textContent = parseFloat(speedRange.value).toFixed(1) + 'x';
+			});
+		}
+		var fadeRange  = document.getElementById('skate-parallax-fade-end');
+		var fadeOutput = document.getElementById('skate-parallax-fade-end-output');
+		if (fadeRange && fadeOutput) {
+			fadeRange.addEventListener('input', function () {
+				fadeOutput.textContent = fadeRange.value + '%';
+			});
+		}
+		var fxIntRange = document.getElementById('skate-hero-fx-intensity');
+		var fxIntOut   = document.getElementById('skate-hero-fx-intensity-out');
+		if (fxIntRange && fxIntOut) {
+			fxIntRange.addEventListener('input', function () { fxIntOut.textContent = fxIntRange.value; });
+		}
+		var fxRadRange = document.getElementById('skate-hero-fx-radius');
+		var fxRadOut   = document.getElementById('skate-hero-fx-radius-out');
+		if (fxRadRange && fxRadOut) {
+			fxRadRange.addEventListener('input', function () { fxRadOut.textContent = fxRadRange.value; });
+		}
+		document.querySelectorAll('.skate-effects-class-pill').forEach(function (el) {
+			el.addEventListener('click', function () {
+				var text = el.textContent.replace('⎘', '').replace('✓', '').trim();
+				function markCopied() {
+					el.classList.add('skate-copied');
+					setTimeout(function () { el.classList.remove('skate-copied'); }, 1500);
+				}
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(text).then(markCopied).catch(fallback);
+				} else {
+					fallback();
+				}
+				function fallback() {
+					var ta = document.createElement('textarea');
+					ta.value = text;
+					ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+					document.body.appendChild(ta);
+					ta.focus();
+					ta.select();
+					try { document.execCommand('copy'); markCopied(); } catch(e) {}
+					document.body.removeChild(ta);
+				}
+			});
+		});
+	}());
+	</script>
+	<?php } );
 }

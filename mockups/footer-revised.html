@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Footer (revised)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-heading: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --dark:   #17263a;
+  --accent: #4db8a4;
+  --muted:  rgba(255,255,255,.40);
+  --rule:   rgba(255,255,255,.08);
+}
+
+body { font-family: var(--font-body); background: #f0ede6; }
+.stub { background: var(--dark); height: 80px; }
+
+/* ── Footer wrapper ── */
+.ft {
+  background: var(--dark);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Main content ── */
+.ft__main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(4rem, 7vw, 6rem) clamp(1.5rem, 5vw, 4rem) clamp(2.5rem, 4vw, 3.5rem);
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: clamp(2rem, 4vw, 5rem);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Brand column ── */
+.ft__brand {}
+
+.ft__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+}
+.ft__logo-mark {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+}
+.ft__logo-text {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .02em;
+  line-height: 1.25;
+}
+
+.ft__desc {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 280px;
+  margin-bottom: 1.75rem;
+}
+
+.ft__social {
+  display: flex;
+  gap: 10px;
+}
+.ft__social-link {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .2s, border-color .2s;
+}
+.ft__social-link:hover { color: #fff; border-color: rgba(255,255,255,.3); }
+.ft__social-link svg { width: 16px; height: 16px; }
+
+/* ── Nav columns ── */
+.ft__col {}
+.ft__col-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.25rem;
+}
+.ft__col-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.ft__col-links a {
+  font-size: 14px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .2s;
+}
+.ft__col-links a:hover { color: #fff; }
+.ft__col-links li.has-icon a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ft__col-links li.has-icon svg { width: 13px; height: 13px; opacity: .55; flex-shrink: 0; }
+
+/* ── Bottom bar ── */
+.ft__bottom {
+  border-top: 1px solid var(--rule);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem clamp(1.5rem, 5vw, 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+.ft__copy {
+  font-size: 12px;
+  color: var(--muted);
+}
+.ft__legal {
+  display: flex;
+  gap: 1.5rem;
+}
+.ft__legal a {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .2s;
+}
+.ft__legal a:hover { color: #fff; }
+
+/* ── Watermark ── */
+.ft__watermark {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: clamp(52px, 9vw, 130px);
+  font-weight: 800;
+  letter-spacing: -.04em;
+  color: rgba(255,255,255,.03);
+  white-space: nowrap;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  padding-bottom: .15em;
+}
+
+@media (max-width: 900px) {
+  .ft__main { grid-template-columns: 1fr 1fr; }
+  .ft__brand { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .ft__main { grid-template-columns: 1fr; }
+  .ft__bottom { flex-direction: column; align-items: flex-start; gap: .5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="stub"></div>
+
+<footer class="ft">
+
+  <!-- Watermark — behind everything -->
+  <div class="ft__watermark" aria-hidden="true">FISH IN WATER FILMS</div>
+
+  <!-- Main grid -->
+  <div class="ft__main">
+
+    <!-- Brand -->
+    <div class="ft__brand">
+      <a href="#" class="ft__logo">
+        <!-- Logo placeholder — replace with actual SVG -->
+        <svg class="ft__logo-mark" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="21" cy="21" r="20" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+          <path d="M10 21 Q16 10 21 14 Q26 18 32 10 Q30 21 24 22 Q30 26 28 34 Q22 28 21 24 Q18 30 14 34 Q12 26 16 22 Q10 24 10 21Z" fill="rgba(77,184,164,.7)" stroke="none"/>
+        </svg>
+        <span class="ft__logo-text">Fish in Water<br>Films</span>
+      </a>
+      <p class="ft__desc">Fish in Water Films creates audiovisual productions with visual quality, creativity and social commitment. From documentaries to advertising, each project is unique in its development and format.</p>
+      <div class="ft__social">
+        <!-- Facebook -->
+        <a href="#" class="ft__social-link" aria-label="Facebook">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+        </a>
+        <!-- X / Twitter -->
+        <a href="#" class="ft__social-link" aria-label="X">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <!-- Vimeo -->
+        <a href="#" class="ft__social-link" aria-label="Vimeo">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.3c-.1 2.5-1.9 6-5.2 10.4C14.4 22.2 11.4 24 8.9 24c-1.5 0-2.7-1.4-3.7-4.1L3.3 13C2.5 10.3 1.6 9 .8 9c-.2 0-.8.4-1.9 1.1L0 8.6C1.2 7.5 2.4 6.4 3.5 5.3 5 4 6.2 3.3 7 3.2c1.9-.2 3.1 1.1 3.5 3.9.5 2.9.8 4.7 1 5.4.5 2.4 1.1 3.6 1.8 3.6.5 0 1.2-.8 2.2-2.3 1-1.5 1.5-2.7 1.6-3.5.1-1.3-.4-2-1.6-2-.6 0-1.2.1-1.8.4 1.2-3.8 3.4-5.7 6.7-5.6 2.5.1 3.7 1.6 3.6 4.2z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Work -->
+    <div class="ft__col">
+      <p class="ft__col-label">Our Work</p>
+      <ul class="ft__col-links">
+        <li><a href="#">Documentaries</a></li>
+        <li><a href="#">Online Clips</a></li>
+        <li><a href="#">TV Productions</a></li>
+        <li><a href="#">Series</a></li>
+        <li><a href="#">View All Films</a></li>
+      </ul>
+    </div>
+
+    <!-- Locations -->
+    <div class="ft__col">
+      <p class="ft__col-label">Locations</p>
+      <ul class="ft__col-links">
+        <li class="has-icon">
+          <a href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Wartemanstr. 1G, Berlin
+          </a>
+        </li>
+        <li class="has-icon">
+          <a href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Paris, France
+          </a>
+        </li>
+        <li class="has-icon">
+          <a href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Calle 148, Bogotá
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Contact -->
+    <div class="ft__col">
+      <p class="ft__col-label">Contact</p>
+      <ul class="ft__col-links">
+        <li class="has-icon">
+          <a href="mailto:info@fishinwaterfilms.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            info@fishinwaterfilms.com
+          </a>
+        </li>
+        <li><a href="#">Press Kit</a></li>
+        <li><a href="#">Work with us</a></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="ft__bottom">
+    <span class="ft__copy">© 2025 All Rights Reserved · Fish in Water Films</span>
+    <nav class="ft__legal">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Imprint</a>
+    </nav>
+  </div>
+
+</footer>
+
+</body>
+</html>

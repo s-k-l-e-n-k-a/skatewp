@@ -12,6 +12,7 @@ add_theme_support('align-wide');
 
 // Custom Stlyes for editor
 function skate_add_editor_styles() {
+    add_editor_style('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Chakra+Petch:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
     add_editor_style(get_template_directory_uri() . '/assets/css/editor-style.css');
 }
 add_action('after_setup_theme', 'skate_add_editor_styles');
@@ -21,6 +22,14 @@ function skate_enqueue_assets(): void
     $theme_dir     = get_template_directory();
     $theme_uri     = get_template_directory_uri();
     $version       = wp_get_theme()->get('Version');
+
+    // === Fonts ===
+    wp_enqueue_style(
+        'skate-fonts',
+        'https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Chakra+Petch:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap',
+        [],
+        null
+    );
 
     // === CSS ===
     $main_css_path = $theme_dir . '/assets/css/main.css';
@@ -38,12 +47,16 @@ function skate_enqueue_assets(): void
         wp_enqueue_style('skate-style', get_stylesheet_uri(), [], $version);
     }
 
-    // === JS ===
+    // === JS — local scripts ===
     $scripts = [
         'flowchart'     => '/assets/js/flowchart.js',
         'reading-time'  => '/assets/js/reading-time.js',
         'smooth-scroll' => '/assets/js/smooth-scroll.js',
         'navbar'        => '/assets/js/navbar.js',
+        'controls'      => '/assets/js/skate-controls.js',
+        'parallax'      => '/assets/js/parallax.js',
+        'hero-fx'       => '/assets/js/hero-fx.js',
+        'hero-breathe'  => '/assets/js/hero-breathe.js',
     ];
 
     foreach ($scripts as $handle => $relative_path) {
@@ -54,9 +67,35 @@ function skate_enqueue_assets(): void
                 $theme_uri . $relative_path,
                 [],
                 filemtime($file_path),
-                true // Load in footer
+                true
             );
         }
+    }
+
+    // === GSAP + hero entrance animations ===
+    wp_enqueue_script(
+        'gsap',
+        'https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js',
+        [],
+        null,
+        true
+    );
+    wp_enqueue_script(
+        'gsap-scrolltrigger',
+        'https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js',
+        [ 'gsap' ],
+        null,
+        true
+    );
+    $gsap_hero_path = $theme_dir . '/assets/js/hero-fx-gsap.js';
+    if ( file_exists( $gsap_hero_path ) ) {
+        wp_enqueue_script(
+            'skate-hero-gsap',
+            $theme_uri . '/assets/js/hero-fx-gsap.js',
+            [ 'gsap', 'gsap-scrolltrigger' ],
+            filemtime( $gsap_hero_path ),
+            true
+        );
     }
 }
 
@@ -65,6 +104,18 @@ function skate_enqueue_assets(): void
  */
 
 require_once get_template_directory() . '/inc/init-backend.php';
+
+/**
+ * Block patterns
+ */
+
+require_once get_template_directory() . '/inc/patterns.php';
+
+/**
+ * Contact Form 7 — mail customisation
+ */
+
+require_once get_template_directory() . '/inc/cf7-mail.php';
 
 
 /**

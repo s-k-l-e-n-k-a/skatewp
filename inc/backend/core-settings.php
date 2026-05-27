@@ -16,7 +16,7 @@ if ( ! is_admin() ) return;
 add_action( 'admin_menu', function () {
 	add_submenu_page(
 		'skate',
-		__( 'Skate – Settings', 'skate' ),
+		__( 'SkateWP – Settings', 'skate' ),
 		__( 'Settings', 'skate' ),
 		'manage_options',
 		'skate-core-settings',
@@ -107,7 +107,7 @@ function skate_render_core_settings(): void {
 	$is_unlocked = get_option( 'skate_update_key', '' ) === SKATE_UPDATE_KEY;
 
 	echo '<div class="wrap skate-core-wrap">';
-	echo '<h1>' . esc_html__( 'Skate – Core Settings', 'skate' ) . '</h1>';
+	echo '<h1>' . esc_html__( 'SkateWP – Core Settings', 'skate' ) . '</h1>';
 
 	if ( $saved ) {
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'skate' ) . '</p></div>';
@@ -149,7 +149,7 @@ function skate_render_core_settings(): void {
 	echo '<div class="skate-tune-section">';
 	echo '<div class="skate-tune-head">';
 	echo '<h2 class="skate-tune-title">' . esc_html__( 'Export / Import', 'skate' ) . '</h2>';
-	echo '<p class="skate-tune-desc">' . esc_html__( 'Save or restore all Skate design settings.', 'skate' ) . '</p>';
+	echo '<p class="skate-tune-desc">' . esc_html__( 'Save or restore all SkateWP design settings.', 'skate' ) . '</p>';
 	echo '</div>';
 
 	// Export block

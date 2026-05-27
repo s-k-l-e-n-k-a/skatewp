@@ -1,0 +1,279 @@
+/* Skate Reviews — Frontend Styles
+   Inherits color, typography and decoration tokens from the active Skate theme. */
+
+:root {
+  --sr-dark:   var(--wp--preset--color--main-color,      #17263a);
+  --sr-accent: var(--wp--preset--color--secondary-color, #d6b36d);
+  --sr-bg:     var(--wp--preset--color--light-gray,      #F2F2F0);
+  --sr-white:  #ffffff;
+  --sr-muted:  var(--wp--preset--color--muted,           rgba(0,0,0,.45));
+  --sr-star:   #f5a623;
+  --sr-font-body:    var(--wp--preset--font-family--dm-sans,  inherit);
+  --sr-font-heading: var(--wp--preset--font-family--syne,     inherit);
+}
+
+.skate-reviews {
+  font-family: var(--sr-font-body);
+  color: var(--sr-dark);
+  container-type: inline-size;
+}
+
+/* ── Error (admin only) ── */
+.skate-reviews-error {
+  padding: .75rem 1rem;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  font-size: 14px;
+}
+
+/* ── Header ── */
+.skate-reviews__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid rgba(0,0,0,.07);
+}
+
+.skate-reviews__score {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.skate-reviews__rating {
+  font-family: var(--sr-font-heading);
+  font-size: clamp(3rem, 5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.04em;
+  color: var(--sr-accent);
+}
+
+.skate-reviews__score-meta {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+
+.skate-reviews__stars-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.skate-reviews__stars-wrap svg          { color: var(--sr-star); }
+.skate-reviews__stars-wrap .sr-star--empty { color: #d8d8d8; }
+
+.skate-reviews__count {
+  font-size: 12.5px;
+  color: var(--sr-muted);
+  letter-spacing: .01em;
+}
+
+.skate-reviews__all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: var(--sr-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sr-accent);
+  text-decoration: none;
+  border: 1.5px solid var(--sr-accent);
+  border-radius: var(--skate-radius, 4px);
+  padding: .5rem 1rem;
+  white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.skate-reviews__all-link:hover {
+  background: var(--sr-accent);
+  color: var(--sr-white);
+}
+
+/* ── Viewport + track ── */
+.skate-reviews__viewport {
+  overflow: hidden;
+  padding-bottom: 20px;
+  margin-bottom: -20px;
+  position: relative;
+}
+
+.skate-reviews__track {
+  display: flex;
+  width: max-content; /* grows past viewport so overflow:hidden can clip it */
+  gap: 1.25rem;
+  padding: 4px 12px; /* breathing room for box-shadow on first/last card */
+  transition: transform .4s cubic-bezier(.4,0,.2,1);
+  align-items: stretch;
+}
+
+/* ── Card
+   Width driven by cqw (= viewport width), so each card is exactly 1/N of the visible area.
+   border-radius and box-shadow come from .skate-radius and .skate-shadow classes. */
+.skate-reviews__card {
+  flex: 0 0 calc((100cqw - 24px - 2 * 1.25rem) / 3);
+  width:      calc((100cqw - 24px - 2 * 1.25rem) / 3);
+  box-sizing: border-box;
+  background: var(--sr-white);
+  padding: clamp(1.25rem,2.5vw,1.75rem);
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .9rem;
+  position: relative;
+}
+
+@container (max-width: 700px) {
+  .skate-reviews__card {
+    flex-basis: calc((100cqw - 24px - 1.25rem) / 2);
+    width:      calc((100cqw - 24px - 1.25rem) / 2);
+  }
+}
+@container (max-width: 420px) {
+  .skate-reviews__card {
+    flex-basis: calc(100cqw - 24px);
+    width:      calc(100cqw - 24px);
+  }
+}
+
+/* Accent bar — spans full card width via negative side margins */
+.skate-reviews__card::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: var(--sr-accent);
+  margin: 0 calc(-1 * clamp(1.25rem,2.5vw,1.75rem));
+  margin-bottom: clamp(1.25rem,2.5vw,1.75rem);
+  flex-shrink: 0;
+}
+
+/* Decorative quote mark in background */
+.skate-reviews__card::after {
+  content: '\201C';
+  position: absolute;
+  bottom: -.5rem;
+  right: .75rem;
+  font-size: 8rem;
+  line-height: 1;
+  color: var(--sr-accent);
+  opacity: .06;
+  font-family: Georgia, serif;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Card head */
+.skate-reviews__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.skate-reviews__card-author {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+}
+
+.skate-reviews__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid var(--sr-bg);
+}
+
+.skate-reviews__avatar--initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sr-accent);
+  color: var(--sr-white);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.skate-reviews__author {
+  display: block;
+  font-family: var(--sr-font-heading);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--sr-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skate-reviews__date {
+  display: block;
+  font-size: 11.5px;
+  color: var(--sr-muted);
+  margin-top: 2px;
+}
+
+.skate-reviews__google-icon {
+  flex-shrink: 0;
+  opacity: .9;
+}
+
+.skate-reviews__card-stars { display: flex; }
+
+.skate-reviews__text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--sr-muted);
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Nav ── */
+.skate-reviews__nav {
+  display: flex;
+  gap: .6rem;
+  margin-top: 1.5rem;
+}
+
+.skate-reviews__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,.15);
+  background: transparent;
+  color: var(--sr-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color .2s, color .2s, background .2s;
+}
+
+.skate-reviews__btn:hover {
+  border-color: var(--sr-accent);
+  color: var(--sr-white);
+  background: var(--sr-accent);
+}
+
+.skate-reviews__btn:disabled {
+  opacity: .25;
+  cursor: default;
+  pointer-events: none;
+}
+
+.skate-reviews__empty {
+  font-size: 14px;
+  color: var(--sr-muted);
+}

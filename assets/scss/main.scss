@@ -1,19 +1,22 @@
 /**
  * ============================================================
- * PACE 4 CHILD THEME — SCSS VERSION
+ * SKATE 4 CHILD THEME — SCSS VERSION
  * Author: Wordliner GmbH
  * Description: Clean, modular SCSS version of child overrides.
  * ============================================================
  */
 
+@import 'utilities'; // shared utility classes (.skate-parallax, .skate-hero-fx, .skate-breathe-fx, …)
+
 // ------------------------------------------------------------
 // BASE FIXES
 // ------------------------------------------------------------
 
+
 html,
 body {
   font-synthesis: none;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: visible;
 }
 
@@ -29,7 +32,8 @@ body.wlac-unit-template-default {
 // BUTTONS & LINKS
 // ------------------------------------------------------------
 
-a.wp-block-button__link {
+a.wp-block-button__link,
+input.wp-block-button__link {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
@@ -39,10 +43,109 @@ a.wp-block-button__link {
   }
 }
 
-.is-style-outline a.wp-block-button__link:hover {
+.is-style-outline a.wp-block-button__link:hover,
+.is-style-outline input.wp-block-button__link:hover {
   background:   var(--skate-btn-outline-hover-bg,   var(--wp--preset--color--secondary-color));
   border-color: var(--skate-btn-outline-hover-bg,   var(--wp--preset--color--secondary-color));
   color:        var(--skate-btn-outline-hover-text,  var(--wp--preset--color--white));
+}
+
+// ------------------------------------------------------------
+// CONTACT FORM 7
+// ------------------------------------------------------------
+
+.wpcf7 {
+  .wpcf7-field-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .wpcf7-form-control:not(.wpcf7-submit) {
+    width: 100%;
+    padding: 12px 16px;
+    background: transparent;
+    border: 1px solid var(--wp--preset--color--light-gray, #e8e8e8);
+    color: var(--wp--preset--color--black);
+    font-family: var(--wp--preset--font-family--dm-sans);
+    font-size: var(--wp--preset--font-size--m);
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.2s ease;
+    -webkit-appearance: none;
+
+    &::placeholder {
+      color: var(--wp--preset--color--muted);
+    }
+
+    &:focus {
+      border-color: var(--wp--preset--color--secondary-color);
+    }
+  }
+
+  textarea.wpcf7-form-control {
+    resize: vertical;
+    min-height: 140px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+  }
+
+  // Submit — mirrors WP fill button via --skate-btn-* variables
+  input.wp-block-button__link {
+    cursor: pointer;
+    background-color: var(--skate-btn-fill-bg, var(--wp--preset--color--secondary-color));
+    color:            var(--skate-btn-fill-text, var(--wp--preset--color--white));
+    border:           2px solid var(--skate-btn-fill-bg, var(--wp--preset--color--secondary-color));
+    border-radius:    var(--skate-radius, 0px);
+
+    &:hover {
+      background-color: var(--skate-btn-fill-hover-bg, var(--wp--preset--color--main-color));
+      border-color:     var(--skate-btn-fill-hover-bg, var(--wp--preset--color--main-color));
+      color:            var(--skate-btn-fill-hover-text, var(--wp--preset--color--white));
+    }
+  }
+
+  .wpcf7-not-valid-tip {
+    font-size: var(--wp--preset--font-size--s);
+    color: #e53e3e;
+    margin-top: 4px;
+  }
+
+  form .wpcf7-response-output {
+    font-size: var(--wp--preset--font-size--s);
+    padding: 16px 20px;
+    margin-top: 20px;
+    border-radius: var(--skate-radius, 4px);
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  // Success
+  form.sent .wpcf7-response-output {
+    background-color: #f0faf4;
+    border-color:     #a8dbb8;
+    color:            #276749;
+  }
+
+  // Validation errors
+  form.invalid .wpcf7-response-output,
+  form.unaccepted .wpcf7-response-output {
+    background-color: #fffbeb;
+    border-color:     #f6d860;
+    color:            #7d5b00;
+  }
+
+  // Spam / server error
+  form.spam .wpcf7-response-output,
+  form.failed .wpcf7-response-output,
+  form.aborted .wpcf7-response-output {
+    background-color: #fff5f5;
+    border-color:     #fcb4b4;
+    color:            #9b2c2c;
+  }
 }
 
 .has-secondary-color-color {
@@ -296,7 +399,7 @@ div.results-based-on-marketing-type {
   border-width: 2px !important;
   border-color: var(--wp--preset--color--secondary-color, #ff9a00) !important;
   background-color: var(--wp--preset--color--secondary-color, #ff9a00) !important;
-  border-radius: var(--pace-radius) !important;
+  border-radius: var(--skate-radius) !important;
   font-size: var(--wp--preset--font-size--medium);
   font-style: normal;
 
@@ -315,14 +418,19 @@ div.results-based-on-marketing-type {
 }
 
 // ------------------------------------------------------------
-// PACE UTILITY CLASSES
+// SKATE UTILITY CLASSES
 // ------------------------------------------------------------
 
-.pace-radius      { border-radius: var(--pace-radius); overflow: hidden; }
-.pace-gradient    { background: var(--pace-gradient); }
-.pace-shadow      { box-shadow: var(--pace-shadow); }
-.pace-no-shadow,
-.pace-no-shadow img { box-shadow: none !important; }
+.skate-radius      { border-radius: var(--skate-radius); overflow: hidden; }
+.skate-gradient    { background: var(--skate-gradient); }
+.skate-shadow      { box-shadow: var(--skate-shadow); }
+.skate-no-shadow,
+.skate-no-shadow img { box-shadow: none !important; }
+
+.skate-custom-controls .skate-prev,
+.skate-custom-controls .skate-next { transition: opacity 0.25s ease; }
+.skate-custom-controls .skate-prev.is-edge,
+.skate-custom-controls .skate-next.is-edge { opacity: 0.3; }
 
 // Social media
 .skate-social {
@@ -340,13 +448,33 @@ div.results-based-on-marketing-type {
     svg { width: 30px; height: 30px; }
     &:hover { opacity: .75; }
 }
+.skate-social--outline .skate-social__link {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    opacity: .55;
+    svg { width: 15px; height: 15px; }
+    &:hover { opacity: 1; }
+}
+.skate-social--solid .skate-social__link {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--wp--preset--color--secondary-color);
+    color: #fff;
+    opacity: 1;
+    svg { width: 15px; height: 15px; }
+    &:hover { opacity: .8; }
+}
 
 // Navbar offset utility class — adds padding-top equal to the fixed navbar height.
 // Apply to the first content block so it always appears below the navbar.
-// Transparent navbar variant: --pace-navbar-offset is 0, so no offset is applied.
-.pace-navbar-offset {
-    padding-top: var(--pace-navbar-offset, 140px);
+// Transparent navbar variant: --skate-navbar-offset is 0, so no offset is applied.
+.skate-navbar-offset {
+    padding-top: var(--skate-navbar-offset, 140px);
 }
+
 
 // ------------------------------------------------------------
 // NAVBAR
@@ -392,7 +520,7 @@ br:has(+ .skate-navbar),
 .skate-navbar__inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: sskate-between;
     width: 88%;
     max-width: 1600px;
     margin: 0 auto;
@@ -409,6 +537,7 @@ br:has(+ .skate-navbar),
 // ── Logo ──────────────────────────────────────────────────────
 
 .skate-navbar__logo {
+    flex: 1;
     flex-shrink: 0;
 
     a {
@@ -453,9 +582,15 @@ br:has(+ .skate-navbar),
     cursor: pointer;
     padding: 5px 10px;
     color: var(--wp--preset--color--main-color);
-    border-radius: var(--pace-radius, 6px);
+    border-radius: var(--skate-radius, 6px);
     transition: background-color .2s;
     min-width: 44px;
+
+    svg {
+        width: 38px;
+        height: auto;
+        flex-shrink: 0;
+    }
 
     &:hover { background-color: rgba(0, 0, 0, .06); }
 
@@ -469,8 +604,10 @@ br:has(+ .skate-navbar),
 .skate-navbar__links {
     display: flex;
     align-items: stretch;
+    justify-content: center;
     gap: 0;
     align-self: stretch;
+    flex: 1;
 }
 
 .skate-navbar__link-item {
@@ -553,7 +690,7 @@ br:has(+ .skate-navbar),
     width: 100%;
     max-width: 1270px;
     background-color: var(--wp--preset--color--white);
-    border-radius: 0 0 var(--pace-radius, 8px) var(--pace-radius, 8px);
+    border-radius: 0 0 var(--skate-radius, 8px) var(--skate-radius, 8px);
     overflow: hidden;
     box-shadow: 0 16px 40px rgba(0, 0, 0, .18);
     padding: 0;
@@ -579,7 +716,7 @@ br:has(+ .skate-navbar),
     background: none;
     border: none;
     cursor: pointer;
-    border-radius: var(--pace-radius, 6px);
+    border-radius: var(--skate-radius, 6px);
     color: var(--wp--preset--color--main-color);
     padding: 0;
     transition: background-color .2s;
@@ -626,7 +763,7 @@ br:has(+ .skate-navbar),
 
     &:last-child { border-right: none; }
 
-    &--featured .pace-submenu-featured-title {
+    &--featured .skate-submenu-featured-title {
         font-size: var(--skate-navbar-submenu-fs, var(--wp--preset--font-size--medium)) !important;
     }
 }
@@ -699,7 +836,7 @@ br:has(+ .skate-navbar),
 }
 
 .skate-navbar__buttons {
-    margin: 0 auto;
+    margin: 0;
 }
 
 // ── Centered variant ──────────────────────────────────────────
@@ -730,11 +867,11 @@ br:has(+ .skate-navbar),
     padding: 10px 40px;
     font-size: var(--wp--preset--font-size--medium);
     font-weight: 700;
-    border-radius: var(--pace-radius, 6px);
+    border-radius: var(--skate-radius, 6px);
     text-decoration: none;
     white-space: nowrap;
     transition: background-color .2s, color .2s, border-color .2s;
-    box-shadow: var(--pace-shadow);
+    box-shadow: var(--skate-shadow);
 
     &--filled {
         background-color: var(--skate-btn-fill-bg,        var(--wp--preset--color--secondary-color));
@@ -787,7 +924,7 @@ br:has(+ .skate-navbar),
     align-items: center;
     justify-content: center;
     gap: 3px;
-    border-radius: var(--pace-radius, 6px);
+    border-radius: var(--skate-radius, 6px);
     color: var(--wp--preset--color--main-color);
     text-decoration: none;
     background: none;
@@ -820,13 +957,11 @@ br:has(+ .skate-navbar),
 
 @media (max-width: #{$nav-breakpoint - 1}) {
     // Icon-only → 36px tall
-    .skate-navbar__icon:not(:has(.skate-navbar__icon-label)),
-    .skate-navbar__hamburger:not(:has(.skate-navbar__icon-label)) {
+    .skate-navbar__icon:not(:has(.skate-navbar__icon-label)) {
         .skate-navbar__icon-svg svg { height: 36px; width: auto; }
     }
     // Icon + label → 23px svg + 3px gap + 10px label = 36px total
-    .skate-navbar__icon:has(.skate-navbar__icon-label),
-    .skate-navbar__hamburger:has(.skate-navbar__icon-label) {
+    .skate-navbar__icon:has(.skate-navbar__icon-label) {
         .skate-navbar__icon-svg svg { height: 23px; width: auto; }
     }
 }
@@ -937,7 +1072,7 @@ br:has(+ .skate-navbar),
 .skate-navbar__mobile-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: sskate-between;
     padding: 16px 20px;
     border-bottom: 1px solid rgba(0, 0, 0, .08);
 
@@ -957,7 +1092,7 @@ br:has(+ .skate-navbar),
     background: none;
     border: none;
     cursor: pointer;
-    border-radius: var(--pace-radius, 6px);
+    border-radius: var(--skate-radius, 6px);
     color: var(--wp--preset--color--main-color);
     padding: 0;
     transition: background-color .2s;
@@ -988,7 +1123,7 @@ br:has(+ .skate-navbar),
 .skate-navbar__mobile-link-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: sskate-between;
     width: 100%;
     padding: 14px 20px;
     background: none;
@@ -1137,7 +1272,7 @@ a.skate-navbar__mobile-link-header {
     font-size: 13px;
     font-weight: 500;
     color: var(--wp--preset--color--main-color);
-    border-radius: var(--pace-radius, 6px);
+    border-radius: var(--skate-radius, 6px);
 
     svg {
         width: 20px;
@@ -1155,6 +1290,91 @@ body.skate-menu-open {
     overflow: hidden;
     position: fixed;
     width: 100%;
+}
+
+// ── Fullscreen menu mode ──────────────────────────────────────────────
+
+.skate-navbar--fullscreen-mode {
+    .skate-navbar__links,
+    .skate-navbar__buttons { display: none !important; }
+
+    .skate-navbar__hamburger { display: inline-flex !important; }
+}
+
+.skate-navbar__fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: var(--skate-fs-bg, var(--wp--preset--color--main-color, #17263a));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+
+    &.is-open {
+        opacity: 1;
+        pointer-events: all;
+    }
+}
+
+.skate-navbar__fullscreen-close {
+    position: absolute;
+    top: clamp(1.25rem, 3vw, 2rem);
+    right: clamp(1.25rem, 3vw, 2rem);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--wp--preset--color--white, #fff);
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: opacity 0.2s;
+
+    svg { width: 28px; height: 28px; }
+
+    &:hover { opacity: 0.6; }
+
+    &:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, .4);
+        outline-offset: 4px;
+    }
+}
+
+.skate-navbar__fullscreen-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    text-align: center;
+    padding: 5rem 2rem;
+    max-height: 100vh;
+    overflow-y: auto;
+}
+
+.skate-navbar__fullscreen-link {
+    font-family: var(--skate-fs-font, var(--wp--preset--font-family--syne, sans-serif));
+    font-size: clamp(1.75rem, 4.5vw, 3.5rem);
+    font-weight: 700;
+    color: var(--wp--preset--color--white, #fff);
+    text-decoration: none;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    transition: opacity 0.25s, transform 0.25s;
+
+    &:hover { transform: scale(1.04); }
+}
+
+.skate-navbar__fullscreen-nav:has(.skate-navbar__fullscreen-link:hover) .skate-navbar__fullscreen-link:not(:hover) {
+    opacity: 0.2;
+}
+
+.skate-navbar__fullscreen-btn {
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    margin-top: clamp(0.5rem, 1.5vw, 1rem);
 }
 
 // ── Variants ──────────────────────────────────────────────────
@@ -1226,3 +1446,25 @@ body.skate-navbar--compact .skate-navbar {
         height: auto;
     }
 }
+
+// ── Muted color adaptation for colored/dark section backgrounds ───────────
+// Add class skate-on-main to any section wrapper with a main-color background.
+// All descendant elements using var(--wp--preset--color--muted) or
+// var(--wp--preset--color--muted-dark) automatically get the white-alpha version.
+.skate-on-main {
+    --wp--preset--color--muted:      rgba(255, 255, 255, 0.60);
+    --wp--preset--color--muted-dark: rgba(255, 255, 255, 0.38);
+}
+
+// ── Motion accessibility ───────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+

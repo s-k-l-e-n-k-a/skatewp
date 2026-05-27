@@ -5,7 +5,7 @@
 function genoa_admin_bar_links( $wp_admin_bar ) {
     $wp_admin_bar->add_node( array(
         'id'    => 'patterns_shortcut',
-        'title' => 'SKATE',
+        'title' => 'SKATEWP',
         'href'  => admin_url( 'admin.php?page=skate-core-settings' ),
         'meta'  => array( 'class' => 'patterns-shortcut' ),
     ) );
@@ -41,11 +41,12 @@ function genoa_admin_bar_styles() {
             color: var(--skate-accent) !important;
         }
         .toplevel_page_skate #wpcontent,
-        .skate_page_skate-design #wpcontent,
-        .skate_page_skate-sitemap #wpcontent,
-        .skate_page_skate-core-settings #wpcontent,
-        .skate_page_skate-identity #wpcontent,
-        .skate_page_skate-navbar #wpcontent {
+        .skatewp_page_skate-design #wpcontent,
+        .skatewp_page_skate-sitemap #wpcontent,
+        .skatewp_page_skate-core-settings #wpcontent,
+        .skatewp_page_skate-identity #wpcontent,
+        .skatewp_page_skate-typography #wpcontent,
+        .skatewp_page_skate-navbar #wpcontent {
             background: linear-gradient(to right, #f2f4f6 0%, var(--skate-accent-bg) 100%);
             min-height: 100vh;
         }
@@ -81,19 +82,21 @@ add_action( 'admin_head', $skate_accent_style_cb );
 add_action( 'wp_head',    $skate_accent_style_cb );
 
 /* --------------------------
- * Admin Topbar on Skate pages
+ * Admin Sidebar on Skate pages
  * ------------------------ */
-function skate_admin_topbar() {
+function skate_admin_sidebar() {
     $screen = get_current_screen();
     if ( ! $screen ) return;
 
     $skate_screens = [
         'toplevel_page_skate',
-        'skate_page_skate-design',
-        'skate_page_skate-core-settings',
-        'skate_page_skate-identity',
-        'skate_page_skate-sitemap',
-        'skate_page_skate-navbar',
+        'skatewp_page_skate-design',
+        'skatewp_page_skate-core-settings',
+        'skatewp_page_skate-identity',
+        'skatewp_page_skate-sitemap',
+        'skatewp_page_skate-navbar',
+        'skatewp_page_skate-typography',
+        'skatewp_page_skate-reviews',
     ];
 
     if ( ! in_array( $screen->id, $skate_screens, true ) ) return;
@@ -102,97 +105,94 @@ function skate_admin_topbar() {
     $version = wp_get_theme( get_template() )->get( 'Version' );
 
     $nav = [
-        [ 'label' => 'Settings',    'url' => admin_url( 'admin.php?page=skate-core-settings' ),  'id' => 'skate_page_skate-core-settings' ],
-        [ 'label' => 'Identity',    'url' => admin_url( 'admin.php?page=skate-identity' ),        'id' => 'skate_page_skate-identity' ],
-        [ 'label' => 'Design',      'url' => admin_url( 'admin.php?page=skate-design' ),          'id' => 'skate_page_skate-design' ],
-        [ 'label' => 'Navigation',  'url' => admin_url( 'admin.php?page=skate-navbar' ),          'id' => 'skate_page_skate-navbar' ],
+        [ 'label' => 'Settings',    'url' => admin_url( 'admin.php?page=skate-core-settings' ),  'id' => 'skatewp_page_skate-core-settings' ],
+        [ 'label' => 'Identity',    'url' => admin_url( 'admin.php?page=skate-identity' ),        'id' => 'skatewp_page_skate-identity' ],
+        [ 'label' => 'Design',      'url' => admin_url( 'admin.php?page=skate-design' ),          'id' => 'skatewp_page_skate-design' ],
+        [ 'label' => 'Typography',  'url' => admin_url( 'admin.php?page=skate-typography' ),      'id' => 'skatewp_page_skate-typography' ],
+        [ 'label' => 'Navigation',  'url' => admin_url( 'admin.php?page=skate-navbar' ),          'id' => 'skatewp_page_skate-navbar' ],
         [ 'label' => 'Sitemap',     'url' => admin_url( 'admin.php?page=skate' ),                 'id' => 'toplevel_page_skate' ],
+        [ 'label' => 'Reviews',     'url' => admin_url( 'admin.php?page=skate-reviews' ),         'id' => 'skatewp_page_skate-reviews' ],
     ];
     ?>
     <style>
-        #skate-topbar {
-            display: flex;
-            align-items: stretch;
-            background: var(--skate-primary);
-            height: 84px;
-            padding: 0 24px 0 16px;
-            box-sizing: border-box;
+        /* Hide Skate sub-items from WP admin menu — navigation is in the sidebar */
+        #adminmenu .toplevel_page_skate ul.wp-submenu { display: none !important; }
+
+        /* Push content past both WP menu + Skate sidebar */
+        #wpcontent { margin-left: 340px !important; } /* 160 WP + 180 Skate */
+        body.folded #wpcontent { margin-left: 216px !important; } /* 36 WP + 180 Skate */
+
+        #skate-sidebar {
             position: fixed;
             top: 32px;
-            right: 0;
+            left: 160px; /* default WP menu width; JS will override */
+            width: 180px;
+            height: calc(100vh - 32px);
+            background: var(--skate-primary);
             z-index: 9990;
-        }
-        .skate-topbar-brand {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
-            justify-content: center;
-            gap: 2px;
-            flex-shrink: 0;
-            margin-right: 20px;
-            height: auto;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
-        .skate-topbar-logo {
-            font-size: 20px;
+        body.folded #skate-sidebar { left: 36px; } /* collapsed WP menu */
+        .skate-sidebar-brand {
+            padding: 22px 18px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .skate-sidebar-logo {
+            display: block;
+            font-size: 18px;
             font-weight: 900;
             font-style: italic;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
             color: #fff;
             text-decoration: none;
             line-height: 1;
             transition: color .15s;
         }
-        .skate-topbar-logo:hover { color: var(--skate-accent); }
-        .skate-topbar-version {
+        .skate-sidebar-logo:hover { color: var(--skate-accent); }
+        .skate-sidebar-version {
+            display: block;
             font-size: 10px;
             color: var(--skate-accent);
             font-weight: 500;
             letter-spacing: .03em;
+            margin-top: 4px;
         }
-        .skate-topbar-sep {
-            width: 1px;
-            background: rgba(255,255,255,0.12);
-            flex-shrink: 0;
-            align-self: stretch;
+        .skate-sidebar-nav {
+            flex: 1;
+            padding: 10px 0;
         }
-        .skate-topbar-nav {
-            display: flex;
-            align-items: stretch;
-            height: 100%;
-            margin-left: 8px;
-        }
-        .skate-topbar-nav a {
-            display: flex;
-            align-items: center;
-            padding: 0 18px;
-            font-size: 13px;
+        .skate-sidebar-nav a {
+            display: block;
+            padding: 10px 18px;
+            font-size: 12.5px;
             font-weight: 500;
             color: rgba(255,255,255,0.55);
             text-decoration: none;
-            border-bottom: 3px solid transparent;
-            border-top: 3px solid transparent;
+            border-left: 3px solid transparent;
             transition: color .15s, background .15s, border-color .15s;
-            box-sizing: border-box;
             white-space: nowrap;
-            border-radius: 0;
+            box-sizing: border-box;
         }
-        .skate-topbar-nav a:hover {
+        .skate-sidebar-nav a:hover {
             color: #fff;
             background: rgba(255,255,255,0.06);
         }
-        .skate-topbar-nav a.is-current {
+        .skate-sidebar-nav a.is-current {
             color: var(--skate-accent);
-            border-bottom-color: var(--skate-accent);
+            border-left-color: var(--skate-accent);
             background: var(--skate-accent-glow);
         }
     </style>
-    <div id="skate-topbar">
-        <div class="skate-topbar-brand">
-            <a class="skate-topbar-logo" href="<?php echo esc_url( admin_url( 'admin.php?page=skate' ) ); ?>">SKATE</a>
-            <span class="skate-topbar-version">v<?php echo esc_html( $version ); ?></span>
+    <div id="skate-sidebar">
+        <div class="skate-sidebar-brand">
+            <a class="skate-sidebar-logo" href="<?php echo esc_url( admin_url( 'admin.php?page=skate' ) ); ?>">SKATEWP</a>
+            <span class="skate-sidebar-version">v<?php echo esc_html( $version ); ?></span>
         </div>
-        <div class="skate-topbar-sep"></div>
-        <nav class="skate-topbar-nav">
+        <nav class="skate-sidebar-nav">
             <?php foreach ( $nav as $item ) : ?>
             <a href="<?php echo esc_url( $item['url'] ); ?>"
                class="<?php echo $item['id'] === $current ? 'is-current' : ''; ?>">
@@ -203,38 +203,41 @@ function skate_admin_topbar() {
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var bar     = document.getElementById('skate-topbar');
-        var content = document.getElementById('wpcontent');
-        var wpbody  = document.getElementById('wpbody-content');
-        if ( !bar ) return;
+        var sidebar  = document.getElementById('skate-sidebar');
+        var SIDEBAR_W = 180;
+        if (!sidebar) return;
 
-        document.body.appendChild(bar);
-
-        function alignBar() {
-            var left = content ? content.getBoundingClientRect().left : 0;
-            bar.style.left = left + 'px';
+        function align() {
+            var wrap    = document.getElementById('adminmenuwrap');
+            var content = document.getElementById('wpcontent');
+            if (!wrap) return;
+            var menuW = wrap.offsetWidth;
+            sidebar.style.left = menuW + 'px';
+            if (content) content.style.marginLeft = (menuW + SIDEBAR_W) + 'px';
         }
-        alignBar();
-        window.addEventListener('resize', alignBar);
 
-        // Push content down so it isn't hidden under the fixed bar
-        if ( wpbody ) wpbody.style.paddingTop = '94px'; // 84px bar + 10px original
+        align();
+        window.addEventListener('resize', align);
+
+        // Handle WP menu collapse/expand (body gets .folded class)
+        var observer = new MutationObserver(function() { setTimeout(align, 300); });
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+        var collapseBtn = document.getElementById('collapse-button');
+        if (collapseBtn) collapseBtn.addEventListener('click', function() { setTimeout(align, 300); });
     });
 
-    // Ctrl+S / Cmd+S → click the primary save button
+    // Cmd/Ctrl+S → click the primary save button
     document.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             var btn = document.querySelector('input[type="submit"].button-primary');
-            if (btn) {
-                e.preventDefault();
-                btn.click();
-            }
+            if (btn) { e.preventDefault(); btn.click(); }
         }
     });
     </script>
     <?php
 }
-add_action( 'admin_notices', 'skate_admin_topbar' );
+add_action( 'admin_notices', 'skate_admin_sidebar' );
 
 /* --------------------------
  * Reorder WP sidebar submenu to match topbar order:
@@ -244,7 +247,7 @@ add_action( 'admin_menu', function () {
     global $submenu;
     if ( empty( $submenu['skate'] ) ) return;
 
-    $order = [ 'skate-core-settings', 'skate-identity', 'skate-design', 'skate-navbar', 'skate' ];
+    $order = [ 'skate-core-settings', 'skate-identity', 'skate-design', 'skate-typography', 'skate-navbar', 'skate' ];
 
     $indexed = [];
     foreach ( $submenu['skate'] as $item ) {
@@ -274,11 +277,13 @@ add_action( 'in_admin_header', function () {
 
     $skate_screens = [
         'toplevel_page_skate',
-        'skate_page_skate-design',
-        'skate_page_skate-core-settings',
-        'skate_page_skate-identity',
-        'skate_page_skate-sitemap',
-        'skate_page_skate-navbar',
+        'skatewp_page_skate-design',
+        'skatewp_page_skate-core-settings',
+        'skatewp_page_skate-identity',
+        'skatewp_page_skate-sitemap',
+        'skatewp_page_skate-navbar',
+        'skatewp_page_skate-typography',
+        'skatewp_page_skate-reviews',
     ];
 
     if ( ! in_array( $screen->id, $skate_screens, true ) ) return;
@@ -287,6 +292,6 @@ add_action( 'in_admin_header', function () {
     remove_all_actions( 'all_admin_notices' );
     remove_all_actions( 'user_admin_notices' );
 
-    // Re-add our own topbar
-    add_action( 'admin_notices', 'skate_admin_topbar' );
+    // Re-add our own sidebar
+    add_action( 'admin_notices', 'skate_admin_sidebar' );
 }, PHP_INT_MAX );

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Services B: Chronicle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-heading: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --dark:  #17263a;
+  --muted: rgba(23,38,58,.42);
+  --rule:  rgba(23,38,58,.12);
+}
+
+body { font-family: var(--font-body); background: var(--dark); margin: 0; }
+.stub { background: #fff; height: 80px; }
+
+/* ── Section ── */
+.sc {
+  background: #fff;
+  padding: clamp(4rem, 8vw, 7rem) clamp(2rem, 6vw, 5rem);
+}
+
+.sc__inner { max-width: 1100px; margin: 0 auto; }
+
+/* ── Section header ── */
+.sc__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: clamp(2rem, 4vw, 3.5rem);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0;
+}
+
+.sc__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dark);
+  opacity: .4;
+}
+
+.sc__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+/* ── Rows ── */
+.sc__row {
+  display: grid;
+  grid-template-columns: 52px 180px 1fr;
+  align-items: center;
+  gap: 0 clamp(2rem, 4vw, 4rem);
+  padding: clamp(2.5rem, 4vw, 3.5rem) 0;
+  border-bottom: 1px solid var(--rule);
+  transition: background .25s;
+  cursor: default;
+}
+
+.sc__row:hover { background: rgba(23,38,58,.025); }
+.sc__row:hover { margin: 0 -2rem; padding-left: 2rem; padding-right: 2rem; border-radius: 4px; }
+
+/* number */
+.sc__num {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .06em;
+  align-self: flex-start;
+  padding-top: 4px;
+}
+
+/* illustration */
+.sc__illus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sc__illus svg {
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+}
+
+/* content */
+.sc__content {}
+
+.sc__title {
+  font-family: var(--font-heading);
+  font-size: clamp(20px, 2vw, 26px);
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -.02em;
+  margin-bottom: .75rem;
+}
+
+.sc__text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 520px;
+}
+
+@media (max-width: 700px) {
+  .sc__row {
+    grid-template-columns: 40px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .sc__illus { grid-column: 2; justify-content: flex-start; margin-bottom: 1rem; }
+  .sc__content { grid-column: 2; }
+}
+</style>
+</head>
+<body>
+
+<div class="stub"></div>
+
+<section class="sc">
+  <div class="sc__inner">
+
+    <div class="sc__header">
+      <p class="sc__eyebrow">What we do</p>
+      <h2 class="sc__heading">Our approach</h2>
+    </div>
+
+    <!-- Row 1 -->
+    <div class="sc__row">
+      <span class="sc__num">01</span>
+      <div class="sc__illus">
+        <!-- Shell / bivalve -->
+        <svg viewBox="0 0 140 90" fill="none" stroke="#17263a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12,45 Q22,8 70,10 Q118,8 128,45 Q118,82 70,80 Q22,82 12,45Z"/>
+          <path d="M14,45 Q42,24 88,18"/>
+          <path d="M14,45 Q44,32 95,28"/>
+          <path d="M14,45 Q44,44 100,42"/>
+          <path d="M14,45 Q44,57 95,62"/>
+          <path d="M14,45 Q42,66 88,72"/>
+          <circle cx="14" cy="45" r="3" fill="#17263a" stroke="none"/>
+        </svg>
+      </div>
+      <div class="sc__content">
+        <h3 class="sc__title">We dive deep</h3>
+        <p class="sc__text">We produce with passion documentary films about real people. Diving deep in their issues and immersing in their realities — until we find the story only they can tell.</p>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="sc__row">
+      <span class="sc__num">02</span>
+      <div class="sc__illus">
+        <!-- Wave -->
+        <svg viewBox="0 0 140 110" fill="none" stroke="#17263a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12,85 Q18,50 45,32 Q62,20 68,12 Q72,6 64,12 Q52,24 58,36 Q64,48 88,58 Q108,66 120,76 Q128,82 122,88"/>
+          <path d="M66,12 Q60,5 54,9"/>
+          <path d="M66,12 Q72,4 78,8"/>
+          <path d="M12,95 Q38,88 60,95 Q82,102 104,95 Q116,91 122,95"/>
+          <path d="M18,103 Q40,98 58,103 Q76,108 94,103"/>
+        </svg>
+      </div>
+      <div class="sc__content">
+        <h3 class="sc__title">We swim upstream</h3>
+        <p class="sc__text">We swim through different currents in form and content, and sometimes upstream. Always combining a social perspective, creativity and quality images.</p>
+      </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="sc__row">
+      <span class="sc__num">03</span>
+      <div class="sc__illus">
+        <!-- Spiral shell / snail -->
+        <svg viewBox="0 0 110 110" fill="none" stroke="#17263a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="55" cy="55" r="50"/>
+          <path d="M55,55 Q72,38 72,55 Q72,76 55,82 Q32,88 15,70 Q4,48 16,26 Q32,4 58,5 Q86,5 100,28 Q112,52 96,76 Q80,98 55,104"/>
+          <path d="M55,55 Q62,48 62,55 Q62,64 55,67"/>
+        </svg>
+      </div>
+      <div class="sc__content">
+        <h3 class="sc__title">We move across borders</h3>
+        <p class="sc__text">We move across acquainted seas and uncharted waters, working worldwide with an international network of filmmakers, artists and dreamers — assembled for every project.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="stub"></div>
+
+</body>
+</html>

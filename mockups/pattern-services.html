@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Pattern: Services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  *, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --font-heading: 'Syne', sans-serif;
+    --font-body:    'DM Sans', sans-serif;
+    --color-dark:   #17263A;
+    --color-accent: #d6b36d;
+    --color-white:  #ffffff;
+    --color-bg:     #F2F2F0;
+    --color-muted:  rgba(23,38,58,.50);
+    --size-s:  13px;
+    --size-m:  16px;
+    --size-xl: clamp(32px, 3.5vw, 46px);
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-size: var(--size-m);
+    background: var(--color-dark);
+    color: var(--color-dark);
+    margin: 0;
+  }
+
+  /* ── Stub: section above (intro) ── */
+  .stub {
+    background: var(--color-white);
+    height: 80px;
+  }
+
+  /* ── Services section ── */
+  .services {
+    background: var(--color-bg);
+    padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 3rem);
+  }
+
+  .services__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .services__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .services__header-left {
+    max-width: 520px;
+  }
+
+  .services__eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+  }
+
+  .services__heading {
+    font-family: var(--font-heading);
+    font-size: var(--size-xl);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -.025em;
+    color: var(--color-dark);
+  }
+
+  .services__heading em {
+    font-style: normal;
+    color: var(--color-accent);
+  }
+
+  .link-all {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: var(--size-m);
+    font-weight: 600;
+    color: var(--color-dark);
+    text-decoration: none;
+    white-space: nowrap;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(23,38,58,.2);
+    transition: color .2s, border-color .2s;
+    flex-shrink: 0;
+    align-self: flex-end;
+    margin-bottom: .2rem;
+  }
+  .link-all:hover { color: var(--color-accent); border-color: var(--color-accent); }
+  .link-all svg { width: 14px; height: 14px; transition: transform .2s; }
+  .link-all:hover svg { transform: translateX(3px); }
+
+  /* Grid */
+  .services__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5px;
+  }
+
+  /* Card */
+  .service-card {
+    background: var(--color-white);
+    padding: clamp(2rem, 3.5vw, 2.75rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    transition: background .2s;
+    cursor: default;
+  }
+  .service-card:hover { background: var(--color-dark); }
+  .service-card:hover .service-card__icon { background: rgba(255,255,255,.08); color: var(--color-accent); }
+  .service-card:hover .service-card__title { color: var(--color-white); }
+  .service-card:hover .service-card__body { color: rgba(255,255,255,.55); }
+  .service-card:hover .service-card__link { color: var(--color-accent); border-color: rgba(214,179,109,.35); }
+  .service-card:hover .service-card__link svg { transform: translateX(3px); }
+
+  .service-card__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    background: var(--color-bg);
+    color: var(--color-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background .2s, color .2s;
+  }
+  .service-card__icon svg { width: 24px; height: 24px; }
+
+  .service-card__title {
+    font-family: var(--font-heading);
+    font-size: clamp(17px, 1.6vw, 20px);
+    font-weight: 700;
+    color: var(--color-dark);
+    letter-spacing: -.01em;
+    transition: color .2s;
+  }
+
+  .service-card__body {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--color-muted);
+    flex: 1;
+    transition: color .2s;
+  }
+
+  .service-card__link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--color-dark);
+    text-decoration: none;
+    border-bottom: 1.5px solid rgba(23,38,58,.15);
+    padding-bottom: 1px;
+    width: fit-content;
+    transition: color .2s, border-color .2s;
+  }
+  .service-card__link svg { width: 13px; height: 13px; transition: transform .2s; }
+</style>
+</head>
+<body>
+
+<div class="stub"></div>
+
+<section class="services">
+  <div class="services__inner">
+
+    <div class="services__header">
+      <div class="services__header-left">
+        <p class="services__eyebrow">What we do</p>
+        <h2 class="services__heading">Services built for<br><em>real results</em></h2>
+      </div>
+      <a href="#" class="link-all">
+        All services
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+    <div class="services__grid">
+
+      <div class="service-card">
+        <div class="service-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <p class="service-card__title">Web Design</p>
+        <p class="service-card__body">Thoughtful interfaces that balance beauty with usability. Every detail designed with purpose and your users in mind.</p>
+        <a href="#" class="service-card__link">
+          Learn more
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div class="service-card">
+        <div class="service-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <p class="service-card__title">Development</p>
+        <p class="service-card__body">Fast, accessible and maintainable code. We build on solid foundations so your site performs and scales without friction.</p>
+        <a href="#" class="service-card__link">
+          Learn more
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div class="service-card">
+        <div class="service-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <p class="service-card__title">Strategy</p>
+        <p class="service-card__body">Clarity before execution. We help you define goals, map user journeys and make decisions grounded in insight.</p>
+        <a href="#" class="service-card__link">
+          Learn more
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div class="service-card">
+        <div class="service-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <p class="service-card__title">Branding</p>
+        <p class="service-card__body">Identity systems that hold up everywhere — from a business card to a billboard. Consistent, memorable and yours.</p>
+        <a href="#" class="service-card__link">
+          Learn more
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div class="service-card">
+        <div class="service-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <p class="service-card__title">Consulting</p>
+        <p class="service-card__body">An outside perspective when you need it most. We work alongside your team to unblock, align and move forward faster.</p>
+        <a href="#" class="service-card__link">
+          Learn more
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div class="service-card">
+        <div class="service-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <p class="service-card__title">Performance</p>
+        <p class="service-card__body">Speed, SEO and Core Web Vitals done right. We audit, optimize and monitor so your site stays sharp after launch.</p>
+        <a href="#" class="service-card__link">
+          Learn more
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

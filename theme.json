@@ -19,12 +19,22 @@
           "slug": "secondary-color"
         },
         {
-          "color": "#f2f4f6",
+          "color": "#888888",
+          "name": "Muted",
+          "slug": "muted"
+        },
+        {
+          "color": "#444444",
+          "name": "Muted Dark",
+          "slug": "muted-dark"
+        },
+        {
+          "color": "#F2F2F0",
           "name": "Light Gray",
           "slug": "light-gray"
         },
         {
-          "color": "#17263A",
+          "color": "#0D0D0D",
           "name": "Black",
           "slug": "black"
         },
@@ -50,11 +60,7 @@
     "spacing": {
       "defaultSpacingSizes": false,
       "spacingSizes": [
-        {
-          "name": "Default Spacer",
-          "size": "0px",
-          "slug": "default-spacer"
-        }
+        { "name": "Default Spacer", "size": "0px", "slug": "default-spacer" }
       ],
       "units": [
         "%",
@@ -72,36 +78,66 @@
       "fontSizes": [
         {
           "fluid": false,
-          "name": "Small",
+          "name": "S",
+          "size": "13px",
+          "slug": "s"
+        },
+        {
+          "fluid": false,
+          "name": "M",
           "size": "16px",
-          "slug": "small"
+          "slug": "m"
         },
         {
-          "name": "Medium",
-          "size": "20px",
-          "slug": "medium"
+          "fluid": {
+            "min": "24px",
+            "max": "32px"
+          },
+          "name": "L",
+          "size": "32px",
+          "slug": "l"
         },
         {
-          "name": "Large",
-          "size": "20px",
-          "slug": "large"
+          "fluid": {
+            "min": "38px",
+            "max": "58px"
+          },
+          "name": "XL",
+          "size": "58px",
+          "slug": "xl"
         },
         {
-          "name": "Extra Large",
-          "size": "60px",
-          "slug": "extra-large"
-        },
-        {
-          "name": "Extra Extra Large",
-          "size": "70px",
-          "slug": "extra-extra-large"
+          "fluid": false,
+          "name": "XXL",
+          "size": "clamp(52px,6vw,80px)",
+          "slug": "xxl"
         }
       ],
       "fontFamilies": [
         {
-          "fontFamily": "Mulish",
-          "name": "Mulish",
-          "slug": "mulish"
+          "fontFamily": "'Syne', sans-serif",
+          "name": "Syne",
+          "slug": "syne"
+        },
+        {
+          "fontFamily": "'DM Sans', sans-serif",
+          "name": "DM Sans",
+          "slug": "dm-sans"
+        },
+        {
+          "fontFamily": "'Space Grotesk', sans-serif",
+          "name": "Space Grotesk",
+          "slug": "space-grotesk"
+        },
+        {
+          "fontFamily": "'Chakra Petch', sans-serif",
+          "name": "Chakra Petch",
+          "slug": "chakra-petch"
+        },
+        {
+          "fontFamily": "'Barlow', sans-serif",
+          "name": "Barlow",
+          "slug": "barlow"
         }
       ]
     },
@@ -113,18 +149,18 @@
       "text": "var(--wp--preset--color--black)"
     },
     "spacing": {
-      "blockGap": "1.2rem",
+      "blockGap": "0",
       "padding": {
         "left": "var:preset|spacing|50",
         "right": "var:preset|spacing|50"
       }
     },
     "typography": {
-      "fontFamily": "Mulish",
-      "fontSize": "var:preset|font-size|large",
-      "fontWeight": "300",
+      "fontFamily": "var:preset|font-family|dm-sans",
+      "fontSize": "var:preset|font-size|m",
+      "fontWeight": "400",
       "letterSpacing": "-0.1px",
-      "lineHeight": "1.4",
+      "lineHeight": "1.6",
       "fontStyle": "normal"
     },
     "blocks": {
@@ -613,7 +649,7 @@
       "core/list": {
         "css": "list-style: disc;\npadding-left: 10px;\n& li{margin-top: 0.5rem;}",
         "typography": {
-          "fontSize": "var(--wp--preset--font-size--small)"
+          "fontSize": "var(--wp--preset--font-size--m)"
         }
       },
       "core/column": {
@@ -646,10 +682,10 @@
           }
         },
         "typography": {
-          "fontSize": "var(--wp--preset--font-size--extra-large)",
+          "fontFamily": "var(--wp--preset--font-family--syne)",
           "fontStyle": "normal",
           "fontWeight": "700",
-          "lineHeight": "1"
+          "lineHeight": "1.15"
         }
       },
       "core/image": {
@@ -662,7 +698,7 @@
       },
       "core/list-item": {
         "typography": {
-          "fontSize": "var(--wp--preset--font-size--small)"
+          "fontSize": "var(--wp--preset--font-size--m)"
         }
       },
       "core/paragraph": {
@@ -683,10 +719,11 @@
           }
         },
         "typography": {
-          "fontSize": "16px",
+          "fontFamily": "var(--wp--preset--font-family--dm-sans)",
+          "fontSize": "var(--wp--preset--font-size--m)",
           "fontStyle": "normal",
           "fontWeight": "400",
-          "lineHeight": "1.5"
+          "lineHeight": "1.6"
         }
       },
       "core/read-more": {
@@ -702,7 +739,7 @@
         }
       },
       "core/spacer": {
-        "css": "height: var(--pace-spacer) !important;",
+        "css": "height: var(--skate-spacer) !important;",
         "spacing": {
           "margin": {
             "bottom": "0px",
@@ -744,54 +781,64 @@
           "fontSize": "var(--wp--preset--font-size--medium)",
           "fontStyle": "normal",
           "fontWeight": "700",
-          "textTransform": "uppercase"
+          "textTransform": "none"
         }
       },
       "caption": {
         "typography": {
-          "fontSize": "var:preset|font-size|small",
+          "fontSize": "var:preset|font-size|s",
           "lineHeight": "1.4"
         }
       },
       "h1": {
         "typography": {
-          "fontSize": "var(--wp--preset--font-size--extra-extra-large)",
+          "fontFamily": "var(--wp--preset--font-family--syne)",
+          "fontSize": "var(--wp--preset--font-size--xl)",
           "fontWeight": "700",
-          "lineHeight": "1.2"
+          "lineHeight": "1.1"
         }
       },
       "h2": {
+        "color": {
+          "text": "var(--wp--preset--color--main-color)"
+        },
         "typography": {
-          "fontSize": "var(--wp--preset--font-size--extra-large)",
+          "fontFamily": "var(--wp--preset--font-family--syne)",
+          "fontSize": "var(--wp--preset--font-size--l)",
           "fontStyle": "normal",
-          "fontWeight": "700",
-          "lineHeight": "1.3",
-          "textAlign": "center"
+          "fontWeight": "800",
+          "letterSpacing": "-0.03em",
+          "lineHeight": "1.2"
         }
       },
       "h3": {
         "typography": {
-          "fontSize": "var(--wp--preset--font-size--large)",
+          "fontFamily": "var(--wp--preset--font-family--syne)",
+          "fontSize": "var(--wp--preset--font-size--m)",
           "fontWeight": "700",
-          "lineHeight": "25px"
+          "lineHeight": "1.3"
         }
       },
       "h4": {
         "typography": {
-          "fontSize": "var(--wp--preset--font-size--medium)",
-          "fontWeight": "700",
-          "lineHeight": "25px"
+          "fontFamily": "var(--wp--preset--font-family--syne)",
+          "fontSize": "var(--wp--preset--font-size--m)",
+          "fontWeight": "600",
+          "lineHeight": "1.3"
         }
       },
       "h5": {
         "typography": {
-          "fontSize": "var:preset|font-size|small",
+          "fontFamily": "var(--wp--preset--font-family--syne)",
+          "fontSize": "var:preset|font-size|s",
+          "fontWeight": "600",
           "letterSpacing": "0.5px"
         }
       },
       "h6": {
         "typography": {
-          "fontSize": "var:preset|font-size|small",
+          "fontFamily": "var(--wp--preset--font-family--syne)",
+          "fontSize": "var:preset|font-size|s",
           "fontWeight": "700",
           "letterSpacing": "1.4px",
           "textTransform": "uppercase"
@@ -799,9 +846,10 @@
       },
       "heading": {
         "typography": {
-          "fontWeight": "400",
-          "lineHeight": "1.125",
-          "letterSpacing": "-0.1px",
+          "fontFamily": "var(--wp--preset--font-family--syne)",
+          "fontWeight": "700",
+          "lineHeight": "1.15",
+          "letterSpacing": "-0.2px",
           "fontStyle": "normal"
         }
       },

@@ -1,9 +1,38 @@
-// PACE UTILITY CLASSES
+// SKATE UTILITY CLASSES
 // Shared between main.scss and editor-style.scss
 // ------------------------------------------------------------
 
-.pace-radius      { border-radius: var(--pace-radius); overflow: hidden; }
-.pace-gradient    { background: var(--pace-gradient); }
-.pace-shadow      { box-shadow: var(--pace-shadow); }
-.pace-no-shadow,
-.pace-no-shadow img { box-shadow: none !important; }
+.skate-radius      { border-radius: var(--skate-radius); overflow: hidden; }
+.skate-gradient    { background: var(--skate-gradient); }
+.skate-shadow      { box-shadow: var(--skate-shadow); }
+.skate-no-shadow,
+.skate-no-shadow img { box-shadow: none !important; }
+
+.skate-parallax {
+	position: relative;
+	backface-visibility: hidden; // avoids subpixel flicker during GPU compositing
+}
+
+.skate-hero-fx {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate; // creates stacking context so z-index:-1 canvas stays inside
+}
+
+.skate-breathe-fx {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate; // same — keeps z-index:-1 WebGL canvas clipped inside the section
+}
+
+// Slider custom controls — skate-prev / skate-next inside skate-custom-controls.
+// .is-edge is added by JS when at the first or last slide.
+.skate-custom-controls .skate-prev,
+.skate-custom-controls .skate-next {
+	transition: opacity 0.25s ease;
+}
+.skate-custom-controls .skate-prev.is-edge,
+.skate-custom-controls .skate-next.is-edge {
+	opacity: 0.3;
+}
+

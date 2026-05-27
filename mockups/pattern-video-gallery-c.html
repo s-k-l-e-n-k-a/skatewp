@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Video Gallery C: Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-heading: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --bg:     #f0ebe0;
+  --dark:   #17263a;
+  --accent: #d6b36d;
+  --muted:  rgba(23,38,58,.45);
+  --white:  #ffffff;
+  --card:   #ffffff;
+  --border: rgba(23,38,58,.1);
+}
+
+body { font-family: var(--font-body); background: var(--dark); margin: 0; }
+.stub { background: var(--dark); height: 80px; }
+
+/* ── Section ── */
+.ev {
+  background: var(--bg);
+  padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+}
+
+/* ── Header ── */
+.ev__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 2rem;
+  margin-bottom: clamp(2.5rem, 4vw, 4rem);
+  padding-bottom: clamp(2rem, 3vw, 3rem);
+  border-bottom: 1px solid var(--border);
+}
+
+.ev__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: .9rem;
+}
+.ev__eyebrow::before {
+  content: '';
+  display: block;
+  width: 24px; height: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.ev__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 4.5vw, 64px);
+  font-weight: 800;
+  color: var(--dark);
+  line-height: 1.0;
+  letter-spacing: -.03em;
+}
+
+.ev__heading em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.ev__header-right {
+  text-align: right;
+  padding-bottom: 4px;
+}
+
+.ev__count {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: .75rem;
+}
+
+/* filter pills — light version */
+.ev__filters { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+.ev__filter {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+  white-space: nowrap;
+}
+.ev__filter:hover { color: var(--dark); border-color: rgba(23,38,58,.3); }
+.ev__filter.is-active {
+  background: var(--dark); border-color: var(--dark);
+  color: var(--white); font-weight: 600;
+}
+
+/* ── Layout ── */
+
+/* Row 1: asymmetric 5-col grid */
+.ev__row1 {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* right side of row1: 2 stacked */
+.ev__row1-stack {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Row 2: 3 equal */
+.ev__row2 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: clamp(2rem, 3vw, 3rem);
+}
+
+@media (max-width: 900px) {
+  .ev__header { grid-template-columns: 1fr; }
+  .ev__header-right { text-align: left; }
+  .ev__filters { justify-content: flex-start; }
+  .ev__row1 { grid-template-columns: 1fr; }
+  .ev__row1-stack { grid-template-rows: auto; grid-template-columns: 1fr 1fr; }
+  .ev__row2 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .ev__row1-stack { grid-template-columns: 1fr; }
+  .ev__row2 { grid-template-columns: 1fr; }
+}
+
+/* ── Card ── */
+.ec {
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease;
+  box-shadow: 0 1px 3px rgba(23,38,58,.08);
+  display: flex;
+  flex-direction: column;
+}
+.ec:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(23,38,58,.14);
+}
+
+/* Thumbnail */
+.ec__thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* large card: taller aspect */
+.ec--large .ec__thumb { aspect-ratio: 4 / 3; }
+
+/* small stacked cards: shorter */
+.ec--small .ec__thumb { aspect-ratio: 16 / 8; }
+
+.ec__img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .45s ease;
+  filter: brightness(.92);
+}
+.ec:hover .ec__img { transform: scale(1.04); filter: brightness(.75); }
+
+/* play button — appears on hover */
+.ec__play {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity .25s;
+}
+.ec:hover .ec__play { opacity: 1; }
+
+.ec__play-circle {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  transition: background .2s, transform .2s;
+}
+.ec:hover .ec__play-circle { background: var(--accent); transform: scale(1.08); }
+
+.ec__play-icon {
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 8px 0 8px 14px;
+  border-color: transparent transparent transparent var(--dark);
+  margin-left: 3px;
+}
+.ec:hover .ec__play-icon { border-left-color: var(--dark); }
+
+/* duration chip */
+.ec__dur {
+  position: absolute;
+  bottom: 10px; right: 10px;
+  background: rgba(23,38,58,.8);
+  color: #fff;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  letter-spacing: .01em;
+}
+
+/* ── Card body ── */
+.ec__body {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.ec__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.ec__cat {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.ec__date {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ec__title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.3;
+  transition: color .2s;
+}
+.ec:hover .ec__title { color: var(--accent); }
+
+/* large card: bigger title */
+.ec--large .ec__title { font-size: 22px; }
+
+.ec__desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ec__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.ec__views {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--muted);
+}
+.ec__views svg { width: 13px; height: 13px; opacity: .6; }
+
+.ec__link {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 600;
+  color: var(--dark);
+  text-decoration: none;
+  transition: color .2s;
+}
+.ec__link svg { width: 14px; height: 14px; transition: transform .2s; }
+.ec:hover .ec__link { color: var(--accent); }
+.ec:hover .ec__link svg { transform: translate(2px, -2px); }
+
+/* ── Load more ── */
+.ev__more {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px;
+}
+
+.ev__more-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--dark);
+  font-family: var(--font-body);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, color .2s;
+}
+.ev__more-btn:hover {
+  background: var(--dark); border-color: var(--dark); color: var(--white);
+}
+
+.ev__more-count { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="stub"></div>
+
+<section class="ev">
+
+  <!-- Header -->
+  <div class="ev__header">
+    <div>
+      <p class="ev__eyebrow">Our Work</p>
+      <h2 class="ev__heading">Films that<br><em>move</em> the world</h2>
+    </div>
+    <div class="ev__header-right">
+      <p class="ev__count">24 films</p>
+      <div class="ev__filters">
+        <button class="ev__filter is-active">All</button>
+        <button class="ev__filter">Documentary</button>
+        <button class="ev__filter">Brand</button>
+        <button class="ev__filter">Events</button>
+        <button class="ev__filter">Short Film</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 1: asymmetric -->
+  <div class="ev__row1">
+
+    <!-- Large card -->
+    <article class="ec ec--large">
+      <div class="ec__thumb">
+        <img class="ec__img" src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=900&q=80" alt="">
+        <div class="ec__play"><div class="ec__play-circle"><div class="ec__play-icon"></div></div></div>
+        <span class="ec__dur">24:07</span>
+      </div>
+      <div class="ec__body">
+        <div class="ec__top">
+          <span class="ec__cat">Documentary</span>
+          <span class="ec__date">May 2026</span>
+        </div>
+        <h3 class="ec__title">Across Nations — A Story of Film Without Borders</h3>
+        <p class="ec__desc">Three cinematographers. Four countries. One unbroken thread. An intimate look at the process behind award-winning cross-border documentary work.</p>
+        <div class="ec__footer">
+          <span class="ec__views">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            14.2k views
+          </span>
+          <a class="ec__link" href="#">
+            Watch now
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Stacked small cards -->
+    <div class="ev__row1-stack">
+
+      <article class="ec ec--small">
+        <div class="ec__thumb">
+          <img class="ec__img" src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=600&q=80" alt="">
+          <div class="ec__play"><div class="ec__play-circle"><div class="ec__play-icon"></div></div></div>
+          <span class="ec__dur">3:42</span>
+        </div>
+        <div class="ec__body">
+          <div class="ec__top">
+            <span class="ec__cat">Brand</span>
+            <span class="ec__date">Mar 2026</span>
+          </div>
+          <h3 class="ec__title">Heimwerk — Brand Identity Film</h3>
+          <div class="ec__footer">
+            <span class="ec__views">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              8.9k views
+            </span>
+            <a class="ec__link" href="#">Watch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="ec ec--small">
+        <div class="ec__thumb">
+          <img class="ec__img" src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=600&q=80" alt="">
+          <div class="ec__play"><div class="ec__play-circle"><div class="ec__play-icon"></div></div></div>
+          <span class="ec__dur">11:18</span>
+        </div>
+        <div class="ec__body">
+          <div class="ec__top">
+            <span class="ec__cat">Short Film</span>
+            <span class="ec__date">Jan 2026</span>
+          </div>
+          <h3 class="ec__title">Still Water</h3>
+          <div class="ec__footer">
+            <span class="ec__views">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              22.1k views
+            </span>
+            <a class="ec__link" href="#">Watch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+
+  <!-- Row 2: 3 equal -->
+  <div class="ev__row2">
+
+    <article class="ec">
+      <div class="ec__thumb">
+        <img class="ec__img" src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80" alt="">
+        <div class="ec__play"><div class="ec__play-circle"><div class="ec__play-icon"></div></div></div>
+        <span class="ec__dur">5:55</span>
+      </div>
+      <div class="ec__body">
+        <div class="ec__top"><span class="ec__cat">Events</span><span class="ec__date">Oct 2025</span></div>
+        <h3 class="ec__title">Summit Aftermovie — Berlin 2025</h3>
+        <p class="ec__desc">Full event coverage of the annual creative summit. 2 days, 40+ speakers.</p>
+        <div class="ec__footer">
+          <span class="ec__views"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>5.4k</span>
+          <a class="ec__link" href="#">Watch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+    <article class="ec">
+      <div class="ec__thumb">
+        <img class="ec__img" src="https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&q=80" alt="">
+        <div class="ec__play"><div class="ec__play-circle"><div class="ec__play-icon"></div></div></div>
+        <span class="ec__dur">38:14</span>
+      </div>
+      <div class="ec__body">
+        <div class="ec__top"><span class="ec__cat">Documentary</span><span class="ec__date">Aug 2025</span></div>
+        <h3 class="ec__title">The Last Projection Room</h3>
+        <p class="ec__desc">Portrait of a dying art: the projectionist. Filmed across independent cinemas in Central Europe.</p>
+        <div class="ec__footer">
+          <span class="ec__views"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>31.7k</span>
+          <a class="ec__link" href="#">Watch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+    <article class="ec">
+      <div class="ec__thumb">
+        <img class="ec__img" src="https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=600&q=80" alt="">
+        <div class="ec__play"><div class="ec__play-circle"><div class="ec__play-icon"></div></div></div>
+        <span class="ec__dur">2:10</span>
+      </div>
+      <div class="ec__body">
+        <div class="ec__top"><span class="ec__cat">Brand</span><span class="ec__date">Jun 2025</span></div>
+        <h3 class="ec__title">Lumière — Product Launch</h3>
+        <p class="ec__desc">Minimal, high-contrast product film for a luxury lighting brand. Shot on Alexa 35.</p>
+        <div class="ec__footer">
+          <span class="ec__views"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>6.8k</span>
+          <a class="ec__link" href="#">Watch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
+        </div>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- Load more -->
+  <div class="ev__more">
+    <button class="ev__more-btn">
+      Load more films
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+    <span class="ev__more-count">Showing 6 of 24</span>
+  </div>
+
+</section>
+
+<div class="stub"></div>
+
+<script>
+  document.querySelectorAll('.ev__filter').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.ev__filter').forEach(function(b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+    });
+  });
+</script>
+</body>
+</html>

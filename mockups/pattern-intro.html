@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Pattern: Intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  *, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --font-heading: 'Syne', sans-serif;
+    --font-body:    'DM Sans', sans-serif;
+    --color-dark:   #17263A;
+    --color-accent: #d6b36d;
+    --color-white:  #ffffff;
+    --color-muted:  rgba(23,38,58,.50);
+    --size-s:  13px;
+    --size-m:  16px;
+    --size-xl: clamp(36px, 4vw, 52px);
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-size: var(--size-m);
+    background: var(--color-dark);
+    color: var(--color-dark);
+    margin: 0;
+  }
+
+  /* ─────────────────────────────────────────
+     Hero (context — simplified)
+  ───────────────────────────────────────── */
+  .hero {
+    position: relative;
+    height: 100vh;
+    min-height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--color-dark);
+  }
+
+  .hero__bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=1600&q=80');
+    background-size: cover;
+    background-position: center;
+    opacity: .35;
+  }
+
+  .hero__inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .hero__h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(42px, 6vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    color: #fff;
+    letter-spacing: -.03em;
+    margin-bottom: 1.25rem;
+  }
+
+  .hero__sub {
+    font-size: clamp(16px, 1.6vw, 20px);
+    color: rgba(255,255,255,.65);
+    max-width: 48ch;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+  }
+
+  .hero__cta {
+    display: inline-block;
+    background: var(--color-accent);
+    color: var(--color-dark);
+    font-weight: 700;
+    font-size: var(--size-m);
+    padding: .9rem 2.25rem;
+    border-radius: 4px;
+    text-decoration: none;
+    letter-spacing: .01em;
+    transition: opacity .2s;
+  }
+  .hero__cta:hover { opacity: .85; }
+
+  /* Scroll indicator */
+  .hero__scroll {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    color: rgba(255,255,255,.35);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+
+  .hero__scroll-line {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,.25);
+    animation: scrollDown 1.6s ease-in-out infinite;
+  }
+
+  @keyframes scrollDown {
+    0%   { transform: scaleY(0); transform-origin: top; }
+    50%  { transform: scaleY(1); transform-origin: top; }
+    51%  { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  /* ─────────────────────────────────────────
+     Intro section — free-standing, no card
+  ───────────────────────────────────────── */
+  .intro {
+    background: var(--color-white);
+    padding: clamp(3rem, 7vw, 6rem) clamp(1.5rem, 5vw, 3rem);
+  }
+
+  .intro__inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: clamp(2.5rem, 5vw, 5rem);
+    align-items: center;
+  }
+
+  .intro__media {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+  }
+
+  .intro__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+    display: block;
+  }
+
+  .intro__badge {
+    position: absolute;
+    top: 2.5rem;
+    left: 2.5rem;
+    z-index: 1;
+    background: var(--color-accent);
+    color: var(--color-dark);
+    font-family: var(--font-heading);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: .45rem 1rem;
+  }
+
+  .intro__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .intro__eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 1.1rem;
+  }
+
+  .intro__heading {
+    font-family: var(--font-heading);
+    font-size: var(--size-xl);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -.025em;
+    color: var(--color-dark);
+    margin-bottom: 1.75rem;
+  }
+
+  .intro__heading em {
+    font-style: normal;
+    color: var(--color-accent);
+  }
+
+  .intro__body {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--color-muted);
+    margin-bottom: 2.5rem;
+    max-width: 44ch;
+  }
+
+  .intro__stats {
+    display: flex;
+    gap: 2.5rem;
+    padding: 1.75rem 0;
+    border-top: 1px solid rgba(23,38,58,.08);
+    border-bottom: 1px solid rgba(23,38,58,.08);
+    margin-bottom: 2.5rem;
+  }
+
+  .intro__stat-value {
+    font-family: var(--font-heading);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 800;
+    color: var(--color-dark);
+    line-height: 1;
+    letter-spacing: -.02em;
+  }
+
+  .intro__stat-value sup {
+    font-size: .5em;
+    vertical-align: super;
+    color: var(--color-accent);
+  }
+
+  .intro__stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-top: .4rem;
+  }
+
+  .intro__actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    background: var(--color-dark);
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: var(--size-m);
+    font-weight: 600;
+    padding: .85rem 1.9rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background .2s, color .2s;
+  }
+  .btn-primary:hover { background: var(--color-accent); color: var(--color-dark); }
+  .btn-primary svg { width: 15px; height: 15px; flex-shrink: 0; transition: transform .2s; }
+  .btn-primary:hover svg { transform: translateX(3px); }
+
+  .link-secondary {
+    font-size: var(--size-m);
+    font-weight: 600;
+    color: var(--color-muted);
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(23,38,58,.18);
+    transition: color .2s, border-color .2s;
+  }
+  .link-secondary:hover { color: var(--color-dark); border-color: var(--color-dark); }
+</style>
+</head>
+<body>
+
+<!-- ── Hero (context) ── -->
+<section class="hero">
+  <div class="hero__bg"></div>
+  <div class="hero__inner">
+    <h1 class="hero__h1">Your Headline<br>Goes Here</h1>
+    <p class="hero__sub">A short subtitle that supports your main message and gives context to the visitor.</p>
+    <a href="#" class="hero__cta">Get Started</a>
+  </div>
+  <div class="hero__scroll">
+    <div class="hero__scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ── Intro (pattern) ── -->
+<section class="intro">
+<div class="intro__inner">
+
+  <div class="intro__media">
+    <img
+      class="intro__img"
+      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&q=80"
+      alt="Portrait"
+    >
+    <span class="intro__badge">Est. 2014</span>
+  </div>
+
+  <div class="intro__content">
+    <p class="intro__eyebrow">About us</p>
+    <h2 class="intro__heading">We build things<br>that <em>matter</em></h2>
+    <p class="intro__body">
+      A small, focused team of designers and developers crafting digital
+      products with intention. We care deeply about craft, clarity, and
+      the people who use what we make.
+    </p>
+
+    <div class="intro__stats">
+      <div>
+        <div class="intro__stat-value">120<sup>+</sup></div>
+        <div class="intro__stat-label">Projects delivered</div>
+      </div>
+      <div>
+        <div class="intro__stat-value">10</div>
+        <div class="intro__stat-label">Years experience</div>
+      </div>
+      <div>
+        <div class="intro__stat-value">98<sup>%</sup></div>
+        <div class="intro__stat-label">Satisfaction rate</div>
+      </div>
+    </div>
+
+    <div class="intro__actions">
+      <a href="#" class="btn-primary">
+        Our story
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a href="#" class="link-secondary">See our work</a>
+    </div>
+  </div>
+
+</div>
+</section>
+
+</body>
+</html>

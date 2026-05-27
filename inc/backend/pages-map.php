@@ -15,8 +15,8 @@ add_action('admin_enqueue_scripts', function ( $hook ) {
  */
 add_action('admin_menu', function () {
     add_menu_page(
-        __( 'Skate – Sitemap', 'skate' ),
-        __( 'Skate', 'skate' ),
+        __( 'SkateWP – Sitemap', 'skate' ),
+        __( 'SkateWP', 'skate' ),
         'edit_pages',
         'skate',
         'skate_render_pages_by_zielgruppe',
@@ -27,7 +27,7 @@ add_action('admin_menu', function () {
     // Rename the auto-generated first submenu item (WP duplicates the parent label by default)
     add_submenu_page(
         'skate',
-        __( 'Skate – Sitemap', 'skate' ),
+        __( 'SkateWP – Sitemap', 'skate' ),
         __( 'Sitemap', 'skate' ),
         'edit_pages',
         'skate',

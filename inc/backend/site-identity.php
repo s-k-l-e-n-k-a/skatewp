@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 // ----------------------------------------
 // Shortcodes — available on frontend and admin
 // ----------------------------------------
+add_shortcode( 'skate_site_title',     fn() => esc_html( get_bloginfo( 'name' ) ) );
 add_shortcode( 'skate_phone',          fn() => esc_html( get_option( 'skate_phone',          '' ) ) );
 add_shortcode( 'skate_fax',            fn() => esc_html( get_option( 'skate_fax',            '' ) ) );
 add_shortcode( 'skate_email',          fn() => esc_html( get_option( 'skate_email',          '' ) ) );
@@ -108,7 +109,9 @@ add_shortcode( 'skate_social', function( $atts ) {
 	}
 
 	if ( ! $out ) return '';
-	$class = trim( 'skate-social ' . esc_attr( $atts['class'] ) );
+	$style        = get_option( 'skate_social_style', 'plain' );
+	$style_class  = in_array( $style, [ 'outline', 'solid' ], true ) ? ' skate-social--' . $style : '';
+	$class        = trim( 'skate-social' . $style_class . ' ' . esc_attr( $atts['class'] ) );
 	return '<div class="' . $class . '">' . $out . '</div>';
 } );
 
@@ -121,7 +124,7 @@ if ( ! is_admin() ) return;
 add_action( 'admin_menu', function () {
 	add_submenu_page(
 		'skate',
-		__( 'Skate – Identity', 'skate' ),
+		__( 'SkateWP – Identity', 'skate' ),
 		__( 'Identity', 'skate' ),
 		'manage_options',
 		'skate-identity',
@@ -133,7 +136,7 @@ add_action( 'admin_menu', function () {
 // Enqueue WP media uploader on this page
 // ----------------------------------------
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
-	if ( $hook === 'skate_page_skate-identity' ) {
+	if ( $hook === 'skatewp_page_skate-identity' ) {
 		wp_enqueue_media();
 	}
 } );
@@ -345,6 +348,10 @@ function skate_render_site_identity(): void {
 		$raw_order = array_values( array_filter( array_map( 'sanitize_key', (array) ( $_POST['skate_social_order'] ?? [] ) ) ) );
 		update_option( 'skate_social_order', wp_json_encode( $raw_order ) );
 
+		// Social icon style
+		$raw_style = sanitize_key( $_POST['skate_social_style'] ?? 'plain' );
+		update_option( 'skate_social_style', in_array( $raw_style, [ 'plain', 'outline', 'solid' ], true ) ? $raw_style : 'plain' );
+
 		$saved = true;
 	}
 
@@ -382,6 +389,7 @@ function skate_render_site_identity(): void {
 	}
 	$social_custom = json_decode( get_option( 'skate_social_custom', '[]' ), true ) ?: [];
 	$social_order  = json_decode( get_option( 'skate_social_order',  '[]' ), true ) ?: [];
+	$social_style  = get_option( 'skate_social_style', 'plain' );
 
 	$logo_url        = $logo_id        ? wp_get_attachment_image_url( $logo_id,        'medium'    ) : '';
 	$favicon_url     = $favicon_id     ? wp_get_attachment_image_url( $favicon_id,     'thumbnail' ) : '';
@@ -389,7 +397,7 @@ function skate_render_site_identity(): void {
 
 	?>
 	<div class="wrap skate-identity-wrap">
-		<h1><?php esc_html_e( 'Skate – Identity', 'skate' ); ?></h1>
+		<h1><?php esc_html_e( 'SkateWP – Identity', 'skate' ); ?></h1>
 
 		<nav class="skate-tune-tabs" style="margin-bottom:24px;">
 			<a href="?page=skate-identity&tab=identity" class="skate-tune-tab<?= $active_tab === 'identity' ? ' is-active' : '' ?>">Identity</a>
@@ -584,6 +592,23 @@ function skate_render_site_identity(): void {
 				<div class="skate-tune-head">
 					<h2 class="skate-tune-title"><?php esc_html_e( 'Social Media', 'skate' ); ?></h2>
 					<p class="skate-tune-desc"><?php esc_html_e( 'Only platforms with a URL appear in [skate_social].', 'skate' ); ?></p>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label"><?php esc_html_e( 'Icon style', 'skate' ); ?></label>
+					<div class="skate-tune-control">
+						<div class="skate-social-styles">
+							<?php foreach ( [ 'plain' => 'Plain', 'outline' => 'Outline', 'solid' => 'Solid' ] as $val => $lbl ) : ?>
+							<label class="skate-social-style-card<?php echo $social_style === $val ? ' is-active' : ''; ?>">
+								<input type="radio" name="skate_social_style" value="<?php echo esc_attr( $val ); ?>"<?php checked( $social_style, $val ); ?> hidden>
+								<span class="skate-social-style-preview skate-social-style-preview--<?php echo esc_attr( $val ); ?>">
+									<?php echo skate_social_svg( 'instagram' ); ?>
+								</span>
+								<span class="skate-social-style-lbl"><?php echo esc_html( $lbl ); ?></span>
+							</label>
+							<?php endforeach; ?>
+						</div>
+					</div>
 				</div>
 
 				<?php
@@ -968,10 +993,28 @@ function skate_render_site_identity(): void {
 
 	.skate-tune-hint code {
 		cursor: pointer;
-		transition: background .15s, color .15s;
+		user-select: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 3px 8px;
+		border-radius: 4px;
+		font-size: 11.5px;
+		font-family: monospace;
+		background: var(--skate-accent-bg);
+		color: var(--skate-accent);
+		border: 1px solid var(--skate-accent-glow);
+		transition: background .15s, color .15s, border-color .15s;
 	}
-	.skate-tune-hint code:hover { background: #dde; color: #135e96; }
-	.skate-tune-hint code.skate-copied { background: #d7f5e3 !important; color: #1a7942 !important; }
+	.skate-tune-hint code::after {
+		content: '⎘';
+		font-size: 11px;
+		opacity: .5;
+	}
+	.skate-tune-hint code:hover { background: var(--skate-accent-glow); border-color: var(--skate-accent); }
+	.skate-tune-hint code:hover::after { opacity: 1; }
+	.skate-tune-hint code.skate-copied { background: #d7f5e3 !important; color: #1a7942 !important; border-color: #a3e6c1 !important; }
+	.skate-tune-hint code.skate-copied::after { content: '✓'; opacity: 1; }
 
 	/* Social media rows */
 	.skate-social-label { display: flex; align-items: center; gap: 7px; }
@@ -1058,6 +1101,32 @@ function skate_render_site_identity(): void {
 		border: 1px dashed #c5d9f0; border-radius: 6px; justify-content: center;
 	}
 	.skate-social-dd-custom:hover { background: #f0f6ff; border-color: #135e96; }
+
+	/* Social icon style switcher */
+	.skate-social-styles { display: flex; gap: 8px; }
+	.skate-social-style-card {
+		display: flex; flex-direction: column; align-items: center; gap: 7px;
+		padding: 10px 14px; border: 2px solid #dcdcdc; border-radius: 8px;
+		cursor: pointer; transition: border-color .15s; min-width: 68px;
+	}
+	.skate-social-style-card:hover { border-color: #b5b9be; }
+	.skate-social-style-card.is-active { border-color: var(--skate-accent); }
+	.skate-social-style-preview {
+		display: flex; align-items: center; justify-content: center;
+		color: #E1306C;
+	}
+	.skate-social-style-preview svg { width: 20px; height: 20px; }
+	.skate-social-style-preview--plain svg { width: 22px; height: 22px; }
+	.skate-social-style-preview--outline {
+		width: 38px; height: 38px; border-radius: 50%;
+		border: 1.5px solid #888; color: #888; opacity: .7;
+	}
+	.skate-social-style-preview--solid {
+		width: 38px; height: 38px; border-radius: 50%;
+		background: #E1306C; color: #fff; opacity: 1;
+	}
+	.skate-social-style-lbl { font-size: 11px; font-weight: 500; color: #50575e; }
+	.skate-social-style-card.is-active .skate-social-style-lbl { color: var(--skate-accent); font-weight: 600; }
 	</style>
 
 	<script>
@@ -1107,12 +1176,35 @@ function skate_render_site_identity(): void {
 		);
 		// Click-to-copy shortcodes
 		document.querySelectorAll('.skate-tune-hint code').forEach(function(el) {
-			el.title = 'Click to copy';
 			el.addEventListener('click', function() {
-				navigator.clipboard.writeText(el.textContent).then(function() {
+				var text = el.textContent.replace('⎘', '').replace('✓', '').trim();
+				function markCopied() {
 					el.classList.add('skate-copied');
 					setTimeout(function() { el.classList.remove('skate-copied'); }, 1500);
-				});
+				}
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(text).then(markCopied).catch(fallback);
+				} else {
+					fallback();
+				}
+				function fallback() {
+					var ta = document.createElement('textarea');
+					ta.value = text;
+					ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+					document.body.appendChild(ta);
+					ta.focus();
+					ta.select();
+					try { document.execCommand('copy'); markCopied(); } catch(e) {}
+					document.body.removeChild(ta);
+				}
+			});
+		});
+
+		// ── Social icon style switcher ──
+		document.querySelectorAll('.skate-social-style-card').forEach(function(card) {
+			card.addEventListener('click', function() {
+				document.querySelectorAll('.skate-social-style-card').forEach(function(c) { c.classList.remove('is-active'); });
+				card.classList.add('is-active');
 			});
 		});
 

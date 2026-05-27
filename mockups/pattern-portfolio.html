@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Pattern: Portfolio Slider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  *, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --font-heading: 'Syne', sans-serif;
+    --font-body:    'DM Sans', sans-serif;
+    --color-dark:   #17263A;
+    --color-accent: #d6b36d;
+    --color-white:  #ffffff;
+    --color-bg:     #F2F2F0;
+    --color-muted:  rgba(23,38,58,.50);
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--color-dark);
+    margin: 0;
+  }
+
+  .stub { background: #F2F2F0; height: 80px; }
+
+  /* ── Section ── */
+  .portfolio {
+    background: var(--color-dark);
+    padding: clamp(4rem, 8vw, 7rem) 0;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .portfolio__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 0 clamp(1.5rem, 5vw, 4rem);
+    margin-bottom: clamp(2.5rem, 4vw, 3.5rem);
+  }
+
+  .portfolio__eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: .85rem;
+  }
+
+  .portfolio__heading {
+    font-family: var(--font-heading);
+    font-size: clamp(32px, 3.5vw, 46px);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -.025em;
+    color: var(--color-white);
+  }
+
+  .portfolio__heading em {
+    font-style: normal;
+    color: var(--color-accent);
+  }
+
+  .link-all {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255,255,255,.6);
+    text-decoration: none;
+    white-space: nowrap;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(255,255,255,.18);
+    transition: color .2s, border-color .2s;
+    flex-shrink: 0;
+    margin-bottom: .2rem;
+  }
+  .link-all:hover { color: var(--color-accent); border-color: rgba(214,179,109,.4); }
+  .link-all svg { width: 14px; height: 14px; }
+
+  /* ── Track ── */
+  .portfolio__track {
+    display: flex;
+    gap: clamp(1rem, 2vw, 1.5rem);
+    padding: 0 clamp(1.5rem, 5vw, 4rem);
+    /* Static: shows first card + peek of second */
+  }
+
+  /* ── Slide card ── */
+  .slide {
+    flex: 0 0 calc(85% - 1rem);
+    max-width: 1000px;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    background: #1e3045;
+    border-radius: 4px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow .3s;
+    position: relative;
+  }
+
+  .slide:hover { box-shadow: 0 32px 64px rgba(0,0,0,.35); }
+
+  /* next slide peek */
+  .slide--next {
+    flex: 0 0 calc(85% - 1rem);
+    max-width: 1000px;
+    opacity: .35;
+    pointer-events: none;
+    filter: blur(1px);
+  }
+
+  /* ── Image pane ── */
+  .slide__img {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: unset;
+    min-height: 480px;
+  }
+
+  .slide__thumb {
+    position: absolute;
+    inset: 0;
+    transition: transform .6s cubic-bezier(.25,.46,.45,.94);
+  }
+  .slide:hover .slide__thumb { transform: scale(1.04); }
+
+  .img--1 { background: linear-gradient(135deg, #c9c4bc 0%, #857a6d 100%); }
+  .img--2 { background: linear-gradient(135deg, #b5c4c1 0%, #5a807a 100%); }
+  .img--3 { background: linear-gradient(135deg, #c4bfb0 0%, #7a6e55 100%); }
+  .img--4 { background: linear-gradient(135deg, #b8b9c8 0%, #6a6c8a 100%); }
+  .img--5 { background: linear-gradient(135deg, #c0bcb5 0%, #7a7268 100%); }
+
+  /* subtle texture on placeholders */
+  .slide__thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,.04) 0px,
+      rgba(255,255,255,.04) 1px,
+      transparent 1px,
+      transparent 9px
+    );
+  }
+
+  /* number overlay on image */
+  .slide__num {
+    position: absolute;
+    bottom: 1.25rem;
+    left: 1.25rem;
+    font-family: var(--font-heading);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.5);
+    z-index: 1;
+  }
+
+  /* ── Info pane ── */
+  .slide__info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(2rem, 3vw, 2.75rem);
+    border-left: 1px solid rgba(255,255,255,.06);
+  }
+
+  .slide__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .slide__tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .slide__title {
+    font-family: var(--font-heading);
+    font-size: clamp(22px, 2vw, 28px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+    color: var(--color-white);
+  }
+
+  .slide__desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(255,255,255,.45);
+  }
+
+  .slide__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: .5rem;
+  }
+
+  .slide__pill {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,.45);
+    background: rgba(255,255,255,.07);
+    border-radius: 3px;
+    padding: .25rem .6rem;
+  }
+
+  .slide__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--color-white);
+    text-decoration: none;
+    border-bottom: 1.5px solid rgba(255,255,255,.2);
+    padding-bottom: 2px;
+    width: fit-content;
+    transition: color .2s, border-color .2s, gap .2s;
+  }
+  .slide:hover .slide__cta { color: var(--color-accent); border-color: rgba(214,179,109,.4); gap: .75rem; }
+  .slide__cta svg { width: 13px; height: 13px; }
+
+  /* ── Controls ── */
+  .portfolio__controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.5rem, 5vw, 4rem) 0;
+  }
+
+  .controls__counter {
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,.35);
+  }
+
+  .controls__counter strong {
+    color: var(--color-white);
+    font-size: 18px;
+    letter-spacing: -.01em;
+  }
+
+  .controls__progress {
+    flex: 1;
+    max-width: 200px;
+    margin: 0 2rem;
+    height: 1px;
+    background: rgba(255,255,255,.12);
+    position: relative;
+    border-radius: 1px;
+  }
+
+  .controls__progress-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 20%; /* 1/5 */
+    background: var(--color-accent);
+    border-radius: 1px;
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+  }
+
+  .controls__arrows {
+    display: flex;
+    gap: .75rem;
+  }
+
+  .arrow-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.15);
+    background: transparent;
+    color: rgba(255,255,255,.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color .2s, color .2s, background .2s;
+  }
+
+  .arrow-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: rgba(214,179,109,.06);
+  }
+
+  .arrow-btn--prev { opacity: .35; }
+  .arrow-btn svg { width: 18px; height: 18px; }
+
+  /* ── Stub below ── */
+  .stub-below { background: var(--color-white); height: 80px; }
+</style>
+</head>
+<body>
+
+<div class="stub"></div>
+
+<section class="portfolio">
+
+  <!-- Header -->
+  <div class="portfolio__header">
+    <div>
+      <p class="portfolio__eyebrow">Selected work</p>
+      <h2 class="portfolio__heading">Projects that<br><em>move the needle</em></h2>
+    </div>
+    <a href="#" class="link-all">
+      View all work
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+
+  <!-- Track -->
+  <div class="portfolio__track">
+
+    <!-- Slide 1 (active) -->
+    <a href="#" class="slide">
+      <div class="slide__img">
+        <div class="slide__thumb img--1"></div>
+        <span class="slide__num">01</span>
+      </div>
+      <div class="slide__info">
+        <div class="slide__meta">
+          <span class="slide__tag">Brand Identity</span>
+          <p class="slide__title">Meridian<br>Studio</p>
+          <p class="slide__desc">Full rebrand and digital presence for a contemporary architecture firm — from identity system to launch site.</p>
+          <div class="slide__tags">
+            <span class="slide__pill">Brand</span>
+            <span class="slide__pill">Web</span>
+            <span class="slide__pill">2024</span>
+          </div>
+        </div>
+        <span class="slide__cta">
+          View project
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <!-- Slide 2 (peek) -->
+    <a href="#" class="slide slide--next">
+      <div class="slide__img">
+        <div class="slide__thumb img--2"></div>
+        <span class="slide__num">02</span>
+      </div>
+      <div class="slide__info">
+        <div class="slide__meta">
+          <span class="slide__tag">UI Design</span>
+          <p class="slide__title">Crestline<br>App</p>
+          <p class="slide__desc">End-to-end product design for a logistics SaaS — from wireframes to a component library used across four platforms.</p>
+          <div class="slide__tags">
+            <span class="slide__pill">UI/UX</span>
+            <span class="slide__pill">SaaS</span>
+            <span class="slide__pill">2024</span>
+          </div>
+        </div>
+        <span class="slide__cta">
+          View project
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Controls -->
+  <div class="portfolio__controls">
+    <span class="controls__counter"><strong>01</strong> / 05</span>
+    <div class="controls__progress">
+      <div class="controls__progress-fill"></div>
+    </div>
+    <div class="controls__arrows">
+      <button class="arrow-btn arrow-btn--prev" aria-label="Previous">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <button class="arrow-btn arrow-btn--next" aria-label="Next">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+
+</section>
+
+<div class="stub-below"></div>
+
+</body>
+</html>

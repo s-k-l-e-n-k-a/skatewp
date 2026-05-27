@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Header (revised)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-heading: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --dark:   #17263a;
+  --accent: #4db8a4;
+}
+
+body { font-family: var(--font-body); background: #111; }
+
+/* ══════════════════════════════════════════
+   HERO — 100vh fullscreen
+══════════════════════════════════════════ */
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Video placeholder — replace with <video> tag in production */
+.hero__video {
+  position: absolute;
+  inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=1600&q=75')
+    center / cover no-repeat;
+  z-index: 0;
+}
+
+/* ── Overlay layers ── */
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+
+  /* 1. General darkening — brings contrast without killing the video */
+  background: rgba(10, 18, 28, .35);
+}
+
+/* Top vignette — navbar legibility */
+.hero__overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 18, 28, .55) 0%,
+    rgba(10, 18, 28, .0)  22%
+  );
+}
+
+/* Bottom fade — bleeds into the dark section below */
+.hero__overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(23, 38, 58, .90) 0%,
+    rgba(23, 38, 58, .30) 28%,
+    transparent            50%
+  );
+}
+
+
+/* ══════════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════════ */
+
+.nb {
+  position: relative;       /* absolute in real page */
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  height: 80px;
+  width: 100%;
+  padding: 0 clamp(1.5rem, 5vw, 3.5rem);
+  flex-shrink: 0;
+  /* Subtle top border so the very top edge reads on bright video frames */
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.nb__logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+
+/* Logo icon — keep client asset, this is a placeholder */
+.nb__logo-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  /* Replace with actual <img src="logo.svg"> */
+}
+
+.nb__logo-text {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.nb__hamburger {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  padding: 8px;
+  background: none;
+  border: none;
+}
+.nb__hamburger span {
+  display: block;
+  width: 28px;
+  height: 1.5px;
+  background: #fff;
+  border-radius: 2px;
+  transition: opacity .2s;
+}
+.nb__hamburger:hover span { opacity: .7; }
+
+
+/* ══════════════════════════════════════════
+   CENTER TEXT
+══════════════════════════════════════════ */
+
+.hero__center {
+  position: absolute;           /* real page: absolute centered */
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 clamp(1.5rem, 8vw, 6rem);
+  gap: 0;
+}
+
+/* Eyebrow — locations or tagline context */
+.hero__eyebrow {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hero__eyebrow::before,
+.hero__eyebrow::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+  opacity: .7;
+}
+
+/* Main title — keep all-caps Syne as client has it */
+.hero__title {
+  font-family: var(--font-heading);
+  font-size: clamp(42px, 7vw, 96px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.02em;
+  line-height: .95;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+/* Teal accent rule under the title */
+.hero__title-rule {
+  width: 48px;
+  height: 2px;
+  background: var(--accent);
+  margin: 0 auto 1.6rem;
+  border-radius: 2px;
+}
+
+/* Claim — italic DM Sans, lighter weight */
+.hero__claim {
+  font-family: var(--font-body);
+  font-size: clamp(15px, 1.8vw, 20px);
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255,255,255,.65);
+  letter-spacing: .02em;
+}
+
+
+/* ══════════════════════════════════════════
+   SCROLL INDICATOR
+══════════════════════════════════════════ */
+
+.hero__scroll {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+}
+
+.hero__scroll-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+}
+
+.hero__scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(255,255,255,.35), transparent);
+  animation: scroll-pulse 2s ease-in-out infinite;
+}
+
+@keyframes scroll-pulse {
+  0%   { transform: scaleY(1);   opacity: 1; }
+  60%  { transform: scaleY(1.3); opacity: .4; }
+  100% { transform: scaleY(1);   opacity: 1; }
+}
+
+
+/* ══════════════════════════════════════════
+   POST-SCROLL NAVBAR (simulated below)
+══════════════════════════════════════════ */
+
+.section-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #555;
+  padding: 28px 24px 10px;
+  background: #111;
+}
+
+.nb--scrolled {
+  background: rgba(23, 38, 58, .96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  /* In real: box-shadow: 0 1px 0 rgba(255,255,255,.05); */
+}
+
+/* Content page stub */
+.page-stub {
+  height: 200px;
+  background: #f5f3ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+.stub-block {
+  height: 10px; width: 180px;
+  background: rgba(23,38,58,.1); border-radius: 5px;
+}
+.stub-block--sm { width: 110px; }
+
+
+/* ══════════════════════════════════════════
+   NOTES PANEL
+══════════════════════════════════════════ */
+
+.notes {
+  background: #1a1a1a;
+  padding: 32px;
+  color: #999;
+  font-size: 13px;
+  line-height: 1.85;
+}
+.notes h3 {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.notes ul {
+  padding-left: 1.2em;
+  color: #777;
+}
+.notes li { margin-bottom: 7px; }
+.notes strong { color: #ccc; }
+.notes code {
+  font-size: 11px;
+  background: rgba(255,255,255,.07);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #aaa;
+}
+.notes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+@media (max-width: 600px) { .notes-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     HERO — full viewport
+══════════════════════════════════ -->
+<div class="hero">
+
+  <!-- Video background (placeholder image) -->
+  <div class="hero__video"></div>
+
+  <!-- Overlay layers (CSS ::before = top fade, ::after = bottom fade) -->
+  <div class="hero__overlay"></div>
+
+  <!-- Navbar -->
+  <nav class="nb">
+    <a href="#" class="nb__logo">
+      <!-- Logo placeholder — replace with client SVG -->
+      <svg class="nb__logo-icon" viewBox="0 0 40 40" fill="none">
+        <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="none" stroke="rgba(77,184,164,.7)" stroke-width="1.2"/>
+        <path d="M12 20 Q16 12 20 16 Q24 20 28 13 Q26 20 22 21 Q26 24 24 30 Q20 26 20 22 Q17 27 14 30 Q12 24 15 21 Q10 22 12 20Z" fill="rgba(77,184,164,.85)"/>
+      </svg>
+      <span class="nb__logo-text">Fish<br>in Water<br>Films</span>
+    </a>
+
+    <button class="nb__hamburger" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <!-- Center text -->
+  <div class="hero__center">
+    <p class="hero__eyebrow">Documentary · Film Production</p>
+    <h1 class="hero__title">Fish in Water Films</h1>
+    <div class="hero__title-rule"></div>
+    <p class="hero__claim">More than Films</p>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="hero__scroll" aria-hidden="true">
+    <span class="hero__scroll-label">Scroll</span>
+    <div class="hero__scroll-line"></div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════
+     SCROLLED NAVBAR STATE
+══════════════════════════════════ -->
+
+<p class="section-label">Navbar — post-scroll state</p>
+
+<nav class="nb nb--scrolled">
+  <a href="#" class="nb__logo">
+    <svg class="nb__logo-icon" viewBox="0 0 40 40" fill="none">
+      <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="none" stroke="rgba(77,184,164,.7)" stroke-width="1.2"/>
+      <path d="M12 20 Q16 12 20 16 Q24 20 28 13 Q26 20 22 21 Q26 24 24 30 Q20 26 20 22 Q17 27 14 30 Q12 24 15 21 Q10 22 12 20Z" fill="rgba(77,184,164,.85)"/>
+    </svg>
+    <span class="nb__logo-text">Fish<br>in Water<br>Films</span>
+  </a>
+  <button class="nb__hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="page-stub">
+  <div class="stub-block"></div>
+  <div class="stub-block stub-block--sm"></div>
+  <div class="stub-block"></div>
+</div>
+
+
+<!-- ══════════════════════════════════
+     DESIGN NOTES
+══════════════════════════════════ -->
+
+<div class="notes">
+  <div class="notes-grid">
+    <div>
+      <h3>What changed</h3>
+      <ul>
+        <li><strong>Overlay triple-layer:</strong> general darkening (.35) + top fade (navbar legibility) + bottom fade (blends into dark sections below).</li>
+        <li><strong>Eyebrow line:</strong> "Documentary · Film Production" flanked by two short teal rules — da contexto sin ocupar protagonismo.</li>
+        <li><strong>Teal rule bajo el título:</strong> 48px × 2px, accent color — el único detalle de color en el centro, ancla la tipografía.</li>
+        <li><strong>Tagline en italic DM Sans 300</strong> en lugar de regular — más liviano y contrasta con el peso del título.</li>
+        <li><strong>Scroll indicator:</strong> "SCROLL" + línea animada al centro del bottom — editorial, no intrusivo.</li>
+        <li><strong>Navbar post-scroll:</strong> fondo <code>#17263a</code> con blur (<code>backdrop-filter</code>) en lugar de blanco — coherente con la identidad.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Lo que se mantiene</h3>
+      <ul>
+        <li>Estructura idéntica: logo arriba izq, hamburger arriba der.</li>
+        <li>Video fullscreen 100vh — solo se le suma el overlay.</li>
+        <li>Título centrado en Syne 800 all-caps.</li>
+        <li>Claim "More than Films" en el mismo lugar.</li>
+        <li>Logo del cliente (SVG placeholder aquí).</li>
+      </ul>
+      <br>
+      <h3>Para implementar</h3>
+      <ul>
+        <li>El overlay es un <code>&lt;div&gt;</code> absoluto sobre el <code>&lt;video&gt;</code> con las tres capas en CSS.</li>
+        <li>El navbar scrolled requiere una pequeña override: <code>.skate-navbar--scrolled { background: rgba(23,38,58,.96) !important; }</code> en lugar del blanco actual.</li>
+        <li>El scroll indicator es markup estático + animación CSS — no JS.</li>
+        <li>Eyebrow y rule son elementos nuevos dentro del hero block.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

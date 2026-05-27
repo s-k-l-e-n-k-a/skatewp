@@ -66,3 +66,18 @@ if ( file_exists( $skate_backend_dir . 'navbar.php' ) ) {
 if ( file_exists( $skate_backend_dir . 'menu-panels.php' ) ) {
     require_once $skate_backend_dir . 'menu-panels.php';
 }
+
+// Load Typography (admin UI + runtime theme.json filter — needed on frontend too)
+if ( file_exists( $skate_backend_dir . 'typography.php' ) ) {
+    require_once $skate_backend_dir . 'typography.php';
+}
+
+// Load Reviews (shortcode + API — needed on frontend and admin)
+if ( file_exists( get_template_directory() . '/inc/reviews.php' ) ) {
+    require_once get_template_directory() . '/inc/reviews.php';
+}
+
+// Load Reviews admin page
+if ( is_admin() && file_exists( $skate_backend_dir . 'reviews.php' ) ) {
+    require_once $skate_backend_dir . 'reviews.php';
+}

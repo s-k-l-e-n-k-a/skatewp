@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — About Us (revised)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-heading: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --dark:   #17263a;
+  --accent: #4db8a4;
+  --light:  #f5f3ee;
+  --muted-dark:  rgba(255,255,255,.45);
+  --muted-light: rgba(23,38,58,.45);
+  --rule-dark:   rgba(255,255,255,.08);
+  --rule-light:  rgba(23,38,58,.08);
+}
+
+body { font-family: var(--font-body); background: var(--light); color: var(--dark); }
+
+
+/* ══════════════════════════════════════════
+   NAVBAR STUB
+══════════════════════════════════════════ */
+.navbar-stub {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 72px;
+  background: rgba(23,38,58,.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--rule-dark);
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(1.5rem, 5vw, 3.5rem);
+}
+.navbar-stub__logo {
+  font-family: var(--font-heading);
+  font-size: 11px; font-weight: 800;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: #fff; line-height: 1.35;
+}
+.navbar-stub__hbg {
+  margin-left: auto;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.navbar-stub__hbg span {
+  display: block; width: 26px; height: 1.5px;
+  background: rgba(255,255,255,.7); border-radius: 2px;
+}
+
+
+/* ══════════════════════════════════════════
+   HERO — subpage, ~52vh
+══════════════════════════════════════════ */
+.hero {
+  position: relative;
+  height: 52vh;
+  min-height: 360px;
+  background: var(--dark);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 clamp(1.5rem, 5vw, 4rem) clamp(2.5rem, 5vw, 4rem);
+}
+
+.hero__bg {
+  position: absolute; inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1400&q=70')
+    center 35% / cover no-repeat;
+  opacity: .25;
+}
+
+/* Top gradient from navbar into hero */
+.hero__overlay {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(23,38,58,.6) 0%, transparent 40%),
+    linear-gradient(to top,    rgba(23,38,58,.8) 0%, transparent 50%);
+}
+
+.hero__content {
+  position: relative; z-index: 2;
+  max-width: 1200px; margin: 0 auto; width: 100%;
+}
+
+.hero__breadcrumb {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero__breadcrumb svg { width: 12px; height: 12px; opacity: .6; }
+
+.hero__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.03em;
+  line-height: .95;
+}
+.hero__heading em {
+  font-style: italic;
+  font-weight: 300;
+  font-family: var(--font-body);
+  color: rgba(255,255,255,.55);
+}
+
+/* Teal accent line left of heading */
+.hero__accent-bar {
+  position: absolute;
+  left: -clamp(1.5rem, 5vw, 4rem);
+  bottom: 0;
+  width: 3px;
+  height: 60%;
+  background: linear-gradient(to top, var(--accent), transparent);
+  opacity: .6;
+}
+
+
+/* ══════════════════════════════════════════
+   SECTION COMMONS
+══════════════════════════════════════════ */
+.section { padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem); }
+.section__inner { max-width: 1200px; margin: 0 auto; }
+
+.eyebrow {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase;
+  margin-bottom: .9rem;
+}
+.eyebrow--dark  { color: var(--muted-dark); }
+.eyebrow--light { color: var(--muted-light); }
+
+
+/* ══════════════════════════════════════════
+   MISSION — light bg, two-column
+══════════════════════════════════════════ */
+.mission { background: #fff; }
+
+.mission__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(3rem, 7vw, 7rem);
+  align-items: start;
+}
+
+.mission__left {}
+
+.mission__year {
+  font-family: var(--font-heading);
+  font-size: clamp(72px, 10vw, 130px);
+  font-weight: 800;
+  color: var(--dark);
+  opacity: .05;
+  line-height: 1;
+  letter-spacing: -.04em;
+  margin-bottom: -1.5rem;
+  user-select: none;
+}
+
+.mission__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -.03em;
+  line-height: 1.05;
+  position: relative; z-index: 1;
+}
+.mission__heading em {
+  font-style: italic;
+  font-weight: 300;
+  font-family: var(--font-body);
+}
+
+.mission__rule {
+  width: 40px; height: 2px;
+  background: var(--accent);
+  margin: 1.5rem 0;
+  border-radius: 2px;
+}
+
+.mission__text {
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--muted-light);
+  max-width: 440px;
+}
+
+.mission__right {
+  padding-top: clamp(1rem, 3vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Pull quote */
+.mission__quote {
+  border-left: 2px solid var(--accent);
+  padding-left: 1.5rem;
+}
+.mission__quote p {
+  font-family: var(--font-body);
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--dark);
+  line-height: 1.65;
+}
+.mission__quote cite {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-top: .8rem;
+  font-style: normal;
+}
+
+/* Stats row */
+.mission__stats {
+  display: flex;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-light);
+}
+.mission__stat-num {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+.mission__stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-top: .3rem;
+}
+
+/* Locations inline */
+.mission__locations {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.mission__location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted-light);
+}
+.mission__location svg { width: 13px; height: 13px; color: var(--accent); flex-shrink: 0; }
+
+
+/* ══════════════════════════════════════════
+   TEAM — dark bg
+══════════════════════════════════════════ */
+.team { background: var(--dark); }
+
+.team__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+
+.team__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.03em;
+  line-height: 1.05;
+}
+.team__heading em {
+  font-style: italic;
+  font-weight: 300;
+  font-family: var(--font-body);
+  color: var(--muted-dark);
+}
+
+.team__count {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--muted-dark);
+  flex-shrink: 0;
+}
+.team__count strong { color: #fff; font-size: 22px; letter-spacing: -.02em; }
+
+/* Grid: 3 cols on desktop, then 2, then 1 */
+.team__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--rule-dark);
+  border: 1px solid var(--rule-dark);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.team__card {
+  background: rgba(255,255,255,.025);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  transition: background .2s;
+}
+.team__card:hover { background: rgba(255,255,255,.05); }
+
+/* Portrait — cinematic 4:5 ratio */
+.team__portrait {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,.06);
+}
+.team__portrait-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(30%);
+  transition: filter .3s, transform .4s;
+}
+.team__card:hover .team__portrait-img {
+  filter: grayscale(0%);
+  transform: scale(1.03);
+}
+
+/* Portrait placeholder initials */
+.team__portrait-placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 800;
+  color: rgba(255,255,255,.12);
+  letter-spacing: -.04em;
+  background: linear-gradient(135deg, rgba(255,255,255,.04), rgba(77,184,164,.08));
+}
+
+/* Accent line on portrait bottom */
+.team__portrait::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.team__card:hover .team__portrait::after { opacity: 1; }
+
+.team__role {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.team__name {
+  font-family: var(--font-heading);
+  font-size: clamp(16px, 1.8vw, 21px);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  margin-top: -.4rem;
+}
+.team__bio {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--muted-dark);
+}
+
+/* 5th card spans 2 cols on desktop to center it */
+.team__card:last-child {
+  /* handled below via nth-child on a 3-col grid of 5 items */
+}
+
+
+/* ══════════════════════════════════════════
+   OFFICES — light bg, two cards
+══════════════════════════════════════════ */
+.offices { background: var(--light); }
+
+.offices__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -.03em;
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+}
+.offices__heading em {
+  font-style: italic;
+  font-weight: 300;
+  font-family: var(--font-body);
+}
+
+.offices__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.office {
+  border: 1px solid var(--rule-light);
+  border-radius: 14px;
+  padding: clamp(1.75rem, 4vw, 3rem);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+.office::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+.office__city {
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 2.5vw, 30px);
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -.025em;
+}
+
+.office__address {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted-light);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.office__address svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 3px; color: var(--accent); }
+
+.office__contact {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark);
+  text-decoration: none;
+  margin-top: .5rem;
+  transition: color .2s;
+}
+.office__contact:hover { color: var(--accent); }
+.office__contact svg { width: 14px; height: 14px; }
+
+/* Watermark city name */
+.office__wm {
+  position: absolute;
+  bottom: -10px; right: 10px;
+  font-family: var(--font-heading);
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 800;
+  letter-spacing: -.05em;
+  color: rgba(23,38,58,.04);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+
+/* ══════════════════════════════════════════
+   CTA STRIP — dark
+══════════════════════════════════════════ */
+.cta-strip {
+  background: var(--dark);
+  padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem);
+}
+.cta-strip__inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.cta-strip__text {}
+.cta-strip__eyebrow {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: var(--muted-dark); margin-bottom: .6rem;
+}
+.cta-strip__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.025em;
+}
+.cta-strip__heading em {
+  font-style: italic;
+  font-weight: 300;
+  font-family: var(--font-body);
+  color: var(--muted-dark);
+}
+.cta-strip__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 100px;
+  padding: 14px 28px;
+  transition: background .2s, border-color .2s;
+  white-space: nowrap;
+}
+.cta-strip__btn:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.4); }
+.cta-strip__btn svg { width: 15px; height: 15px; }
+
+
+/* ══════════════════════════════════════════
+   FOOTER STUB
+══════════════════════════════════════════ */
+.footer-stub {
+  background: var(--dark);
+  border-top: 1px solid var(--rule-dark);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-stub span {
+  font-size: 11px;
+  color: rgba(255,255,255,.2);
+  letter-spacing: .1em;
+}
+
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .mission__grid { grid-template-columns: 1fr; gap: 3rem; }
+  .team__grid { grid-template-columns: repeat(2, 1fr); }
+  .offices__grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .team__grid { grid-template-columns: 1fr; }
+  .team__header { flex-direction: column; align-items: flex-start; }
+  .hero__heading { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar stub (scrolled state — on a subpage the navbar is always solid) -->
+
+
+
+<!-- ══ HERO ══════════════════════════════ -->
+class="team__role">Producer &amp; Director</p>
+          <h3 class="team__name">Ruì Díaz</h3>
+        </div>
+        <p class="team__bio">Extensive background directing and producing for major brands and international organizations — documentaries, web content, animations and image films. MA in Film from Barcelona Film School. Feature documentary <em>Creative Despite War</em> selected at international festivals.</p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="team__card">
+        <div class="team__portrait">
+          <div class="team__portrait-placeholder">AN</div>
+        </div>
+        <div>
+          <p class="team__role">Executive Producer</p>
+          <h3 class="team__name">Anna Nonnenmacher</h3>
+        </div>
+        <p class="team__bio">Anthropologist from Free University of Berlin overseeing content analysis across all projects. Experience includes sustainability and waste management initiatives in developing regions.</p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="team__card">
+        <div class="team__portrait">
+          <div class="team__portrait-placeholder">CL</div>
+        </div>
+        <div>
+          <p class="team__role">Director of Photography</p>
+          <h3 class="team__name">Carlos Andrés López</h3>
+        </div>
+        <p class="team__bio">Cinematographer trained at Film Academy Berlin. Work featured at Berlinale, Bildrausch Basel, and other prestigious festivals. Recent directorial work includes documentary <em>Guillo</em>.</p>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="team__card">
+        <div class="team__portrait">
+          <div class="team__portrait-placeholder">MV</div>
+        </div>
+        <div>
+          <p class="team__role">Filmmaker &amp; Scriptwriter</p>
+          <h3 class="team__name">Martín Vallejos Bossen</h3>
+        </div>
+        <p class="team__bio">Trained in Chile, London, New York, and Germany. Films selected for international festivals. 2023 Drama Pitching Lab winner. Currently developing feature film <em>The Odyssey</em>.</p>
+      </div>
+
+      <!-- Card 5 — centered on last row via CSS -->
+      <div class="team__card" style="grid-column: 2 / 3;">
+        <div class="team__portrait">
+          <div class="team__portrait-placeholder">JW</div>
+        </div>
+        <div>
+          <p class="team__role">Screenwriter</p>
+          <h3 class="team__name">J.I.M. Wels</h3>
+        </div>
+        <p class="team__bio">Specializes in original series and character-driven narratives incorporating magical realism and Indigenous perspectives. Studies at Buchakademie Berlin.</p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══ OFFICES ═══════════════════════════ -->
+<section class="section offices">
+  <div class="section__inner">
+    <p class="eyebrow eyebrow--light">Where we work</p>
+    <h2 class="offices__heading">Two cities,<br><em>one vision</em></h2>
+
+    <div class="offices__grid">
+
+      <div class="office">
+        <div class="office__wm">Berlin</div>
+        <p class="office__city">Berlin</p>
+        <p class="office__address">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Herkomerstr. 10<br>12435 Berlin, Germany
+        </p>
+        <a href="mailto:info@fishinwaterfilms.com" class="office__contact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          info@fishinwaterfilms.com
+        </a>
+      </div>
+
+      <div class="office">
+        <div class="office__wm">Bogotá</div>
+        <p class="office__city">Bogotá</p>
+        <p class="office__address">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Calle 146 N° 7F 90<br>Bogotá, Colombia
+        </p>
+        <a href="mailto:info@fishinwaterfilms.com" class="office__contact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          info@fishinwaterfilms.com
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ CTA STRIP ══════════════════════════ -->
+<div class="cta-strip">
+  <div class="cta-strip__inner">
+    <div class="cta-strip__text">
+      <p class="cta-strip__eyebrow">Our work</p>
+      <h2 class="cta-strip__heading">See the films <em>we've made</em></h2>
+    </div>
+    <a href="#" class="cta-strip__btn">
+      View all projects
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</div>
+
+
+<!-- Footer stub -->
+<div class="footer-stub">
+  <span>© 2025 Fish in Water Films</span>
+</div>
+
+</body>
+</html>

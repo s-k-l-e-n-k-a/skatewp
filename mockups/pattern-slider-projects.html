@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skate — Projects Slider (revised)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-heading: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --dark:   #17263a;
+  --accent: #4db8a4;
+  --muted:  rgba(255,255,255,.45);
+  --rule:   rgba(255,255,255,.10);
+}
+
+body { font-family: var(--font-body); background: #eee; margin: 0; }
+.stub { background: var(--dark); height: 80px; }
+
+/* ── Section ── */
+.ps {
+  background: var(--dark);
+  padding: clamp(4rem, 7vw, 6rem) 0;
+  overflow: hidden;
+}
+
+.ps__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 5vw, 4rem);
+}
+
+/* ── Header row ── */
+.ps__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: clamp(2.5rem, 4vw, 3.5rem);
+}
+
+.ps__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .7rem;
+}
+
+.ps__heading {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 3.5vw, 46px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.03em;
+  line-height: 1.05;
+}
+
+.ps__heading em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+}
+
+/* counter + nav group */
+.ps__controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+.ps__counter {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ps__counter strong {
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: -.02em;
+}
+
+.ps__nav {
+  display: flex;
+  gap: 10px;
+}
+
+.ps__btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, border-color .2s;
+}
+.ps__btn:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.3); }
+.ps__btn svg { width: 18px; height: 18px; }
+
+/* ── Slide ── */
+.ps__slide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  min-height: 480px;
+  position: relative;
+}
+
+/* Left: image */
+.ps__img {
+  position: relative;
+  overflow: hidden;
+}
+
+.ps__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* gradient on image right edge for blend */
+.ps__img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 60%, rgba(23,38,58,.85));
+  pointer-events: none;
+}
+
+/* Right: content */
+.ps__content {
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--rule);
+  border-left: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2.5rem, 5vw, 4rem);
+  gap: 1.5rem;
+}
+
+.ps__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ps__tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 100px;
+  padding: 4px 12px;
+}
+
+.ps__title {
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 2.5vw, 34px);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.025em;
+  line-height: 1.15;
+}
+
+.ps__text {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 420px;
+}
+
+.ps__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #fff;
+  text-decoration: none;
+  margin-top: .5rem;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(255,255,255,.3);
+  transition: border-color .2s, gap .2s;
+  align-self: flex-start;
+}
+.ps__link:hover { border-color: #fff; gap: 12px; }
+.ps__link svg { width: 16px; height: 16px; }
+
+/* ── Progress bar ── */
+.ps__progress {
+  display: flex;
+  gap: 6px;
+  margin-top: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.ps__progress-bar {
+  height: 2px;
+  flex: 1;
+  background: var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ps__progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width .3s ease;
+}
+
+.ps__progress-bar.is-active .ps__progress-fill { width: 100%; }
+.ps__progress-bar.is-done   .ps__progress-fill { width: 100%; background: rgba(255,255,255,.25); }
+
+/* ── Slide transition ── */
+.ps__slide {
+  transition: opacity .3s ease;
+}
+.ps__slide.is-transitioning {
+  opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .ps__slide { grid-template-columns: 1fr; min-height: auto; }
+  .ps__img { height: 260px; }
+  .ps__img::after { background: linear-gradient(to bottom, transparent 50%, rgba(23,38,58,.9)); }
+  .ps__header { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+  .ps__controls { align-self: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="stub"></div>
+
+<section class="ps">
+  <div class="ps__inner">
+
+    <!-- Header -->
+    <div class="ps__header">
+      <div>
+        <p class="ps__eyebrow">What we do</p>
+        <h2 class="ps__heading">Projects that<br><em>move the needle</em></h2>
+      </div>
+
+      <!-- Counter + nav -->
+      <div class="ps__controls">
+        <span class="ps__counter"><strong>01</strong> / 06</span>
+        <div class="ps__nav">
+          <button class="ps__btn" aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+          <button class="ps__btn" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide -->
+    <div class="ps__slide">
+
+      <!-- Image side -->
+      <div class="ps__img">
+        <!-- placeholder image — replace with actual project thumbnail -->
+        <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=900&q=80" alt="Talent Camp">
+      </div>
+
+      <!-- Content side -->
+      <div class="ps__content">
+        <div class="ps__tags">
+          <span class="ps__tag">Documentary</span>
+          <span class="ps__tag">In Progress</span>
+        </div>
+        <h3 class="ps__title">Talent Camp</h3>
+        <p class="ps__text">Young refugees from Sudan and Colombia are learning acting skills through workshops at a Talent Camp, organized by Fish in Water Films and Jugendliche Ohne Grenzen.</p>
+        <a href="#" class="ps__link">
+          View Project
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Progress bars -->
+    <div class="ps__progress">
+      <div class="ps__progress-bar is-active"><div class="ps__progress-fill"></div></div>
+      <div class="ps__progress-bar"><div class="ps__progress-fill"></div></div>
+      <div class="ps__progress-bar"><div class="ps__progress-fill"></div></div>
+      <div class="ps__progress-bar"><div class="ps__progress-fill"></div></div>
+      <div class="ps__progress-bar"><div class="ps__progress-fill"></div></div>
+      <div class="ps__progress-bar"><div class="ps__progress-fill"></div></div>
+    </div>
+
+  </div>
+</section>
+
+<div class="stub"></div>
+
+<script>
+// Animate active progress bar fill on load (demo only)
+document.querySelectorAll('.ps__progress-bar.is-active .ps__progress-fill').forEach(function(el) {
+  requestAnimationFrame(function() { el.style.width = '38%'; });
+});
+</script>
+
+</body>
+</html>
