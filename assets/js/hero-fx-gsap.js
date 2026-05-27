@@ -14,6 +14,11 @@
 	// DOM traversal approach handles mixed HTML (<br>, <strong>, etc.) safely.
 	function wrapWords(el) {
 		Array.from(el.childNodes).forEach(function (node) {
+			if (node.nodeType === Node.ELEMENT_NODE) {
+				// Recurse into <strong>, <em>, <br>, etc. so text inside them gets wrapped too.
+				wrapWords(node);
+				return;
+			}
 			if (node.nodeType !== Node.TEXT_NODE) return;
 			var frag = document.createDocumentFragment();
 			node.textContent.split(/(\s+)/).forEach(function (part) {

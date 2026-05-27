@@ -472,7 +472,7 @@ div.results-based-on-marketing-type {
 // Apply to the first content block so it always appears below the navbar.
 // Transparent navbar variant: --skate-navbar-offset is 0, so no offset is applied.
 .skate-navbar-offset {
-    padding-top: var(--skate-navbar-offset, 140px);
+    padding-top: var(--skate-navbar-offset, 96px);
 }
 
 
@@ -481,8 +481,8 @@ div.results-based-on-marketing-type {
 // ------------------------------------------------------------
 
 $nav-breakpoint: 992px;
-$nav-height: 140px;
-$nav-height-compact: 100px;
+$nav-height: 96px;
+$nav-height-compact: 72px;
 $nav-z: 1005;
 
 // ── Base ──────────────────────────────────────────────────────
@@ -664,7 +664,7 @@ br:has(+ .skate-navbar),
 
 .skate-navbar__overlay {
     position: fixed;
-    top: var(--skate-navbar-bottom, 140px);
+    top: var(--skate-navbar-bottom, 96px);
     left: 0;
     right: 0;
     bottom: 0;
@@ -684,7 +684,7 @@ br:has(+ .skate-navbar),
 
 .skate-navbar__submenu {
     position: fixed;
-    top: var(--skate-navbar-bottom, 140px);
+    top: var(--skate-navbar-bottom, 96px);
     left: 50%;
     transform: translateX(-50%) translateY(-8px);
     width: 100%;
@@ -992,10 +992,6 @@ br:has(+ .skate-navbar),
         padding: 0 12px;
     }
 
-    // Shrink logo slightly
-    .skate-navbar__logo img {
-        width: 90px !important;
-    }
 }
 
 // ── Responsive: tight desktop (992px–1199px) ──────────────────

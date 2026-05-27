@@ -306,7 +306,11 @@
 		}
 
 		var canvas = document.createElement('canvas');
-		var canvasZ = source.type === 'video' ? (source.zIdx || 1) : -1;
+		// For video: z-index 0 puts the canvas above the video layer (-1) and the
+		// cover-block colour overlay (also 0, but earlier in DOM → canvas wins by order),
+		// while staying below the inner-container content (z-index 1).
+		// Inheriting the video's own z-index breaks when WP sets it to -1 (-1 || 1 = -1).
+		var canvasZ = source.type === 'video' ? 0 : -1;
 		canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:block;z-index:' + canvasZ + ';';
 		el.appendChild(canvas);
 

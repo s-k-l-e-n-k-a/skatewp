@@ -499,8 +499,8 @@ add_action( 'wp_head', function () {
 	$variant        = get_option( 'skate_navbar_variant', 'standard' );
 	$desktop_offset = match ( $variant ) {
 		'transparent' => '0px',
-		'compact'     => '100px',
-		default       => '140px',
+		'compact'     => '72px',
+		default       => '96px',
 	};
 	$mobile_offset  = $variant === 'transparent' ? '0px' : '60px';
 	echo '<style id="skate-navbar-offset">';
