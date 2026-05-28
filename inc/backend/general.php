@@ -119,8 +119,8 @@ function skate_admin_sidebar() {
         #adminmenu .toplevel_page_skate ul.wp-submenu { display: none !important; }
 
         /* Push content past both WP menu + Skate sidebar */
-        #wpcontent { margin-left: 340px !important; } /* 160 WP + 180 Skate */
-        body.folded #wpcontent { margin-left: 216px !important; } /* 36 WP + 180 Skate */
+        #wpcontent, #wpfooter { margin-left: 340px !important; } /* 160 WP + 180 Skate */
+        body.folded #wpcontent, body.folded #wpfooter { margin-left: 216px !important; } /* 36 WP + 180 Skate */
 
         #skate-sidebar {
             position: fixed;
