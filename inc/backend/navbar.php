@@ -90,7 +90,7 @@ function skate_navbar_defaults(): array {
 }
 
 function skate_navbar_seed( bool $force = false ): void {
-	if ( ! $force && get_option( 'skate_navbar_links' ) ) return;
+	if ( ! $force && get_option( 'skate_navbar_links' ) !== false ) return;
 	$d = skate_navbar_defaults();
 
 	// Try to resolve URL slugs to page IDs so the picker shows the linked page name.
@@ -116,7 +116,12 @@ function skate_navbar_seed( bool $force = false ): void {
 	update_option( 'skate_navbar_buttons', wp_json_encode( $d['buttons'] ) );
 	if ( isset( $d['icons'] ) ) update_option( 'skate_navbar_icons', wp_json_encode( $d['icons'] ) );
 }
-add_action( 'after_switch_theme', 'skate_navbar_seed' );
+// Seed on first activation only — skip if called from within a theme update
+// (upgrader_process_complete fires switch_theme, we don't want to touch configured data).
+add_action( 'after_switch_theme', function () {
+	if ( defined( 'SKATE_DOING_UPDATE' ) ) return;
+	skate_navbar_seed();
+} );
 
 // ----------------------------------------
 // Shortcode: [skate_navbar]

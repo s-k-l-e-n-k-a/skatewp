@@ -266,7 +266,9 @@ add_action( 'upgrader_process_complete', function ( $upgrader, $hook_extra ) {
     }
 
     // Reactivate child theme if it's on disk.
+    // Define SKATE_DOING_UPDATE so after_switch_theme hooks skip data-seeding.
     if ( is_dir( $child_dir ) ) {
+        define( 'SKATE_DOING_UPDATE', true );
         switch_theme( $stylesheet );
     }
 
