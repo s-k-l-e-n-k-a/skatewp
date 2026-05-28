@@ -524,12 +524,13 @@ br:has(+ .skate-navbar),
     width: 88%;
     max-width: 1600px;
     margin: 0 auto;
-    padding: 0;
+    padding: 14px 0;
     height: $nav-height;
     gap: 40px;
 
     @media (max-width: #{$nav-breakpoint - 1}) {
         height: 60px;
+        padding: 10px 0;
         gap: 16px;
     }
 }
