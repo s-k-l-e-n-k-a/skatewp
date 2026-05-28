@@ -149,8 +149,6 @@
     function openMobileMenu() {
         if (!mobileMenu) return;
         lastFocusedBeforeMenu = document.activeElement;
-        savedScrollY = window.scrollY;
-        document.body.style.top = '-' + savedScrollY + 'px';
         document.body.classList.add('skate-menu-open');
         mobileMenu.classList.add('is-open');
         mobileMenu.setAttribute('aria-hidden', 'false');
@@ -166,8 +164,6 @@
         mobileMenu.classList.remove('is-open');
         mobileMenu.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('skate-menu-open');
-        document.body.style.top = '';
-        window.scrollTo(0, savedScrollY);
         if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
         // Return focus to trigger
         if (lastFocusedBeforeMenu) { lastFocusedBeforeMenu.focus(); lastFocusedBeforeMenu = null; }
@@ -177,7 +173,6 @@
         if (!fullscreenMenu) return;
         lastFocusedBeforeMenu = document.activeElement;
         savedScrollY = window.scrollY;
-        document.body.style.top = '-' + savedScrollY + 'px';
         document.body.classList.add('skate-menu-open');
         fullscreenMenu.classList.add('is-open');
         fullscreenMenu.setAttribute('aria-hidden', 'false');
@@ -190,8 +185,6 @@
         fullscreenMenu.classList.remove('is-open');
         fullscreenMenu.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('skate-menu-open');
-        document.body.style.top = '';
-        window.scrollTo(0, savedScrollY);
         if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
         if (lastFocusedBeforeMenu) { lastFocusedBeforeMenu.focus(); lastFocusedBeforeMenu = null; }
     }

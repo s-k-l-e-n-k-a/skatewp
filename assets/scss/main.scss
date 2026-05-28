@@ -588,16 +588,41 @@ br:has(+ .skate-navbar),
     min-width: 44px;
 
     svg {
-        width: 38px;
+        width: 25px;
         height: auto;
         flex-shrink: 0;
     }
+
 
     &:hover { background-color: rgba(0, 0, 0, .06); }
 
     @media (max-width: #{$nav-breakpoint - 1}) {
         display: inline-flex;
     }
+}
+
+// Animated hamburger → X icon
+.skate-navbar__hbg-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.skate-navbar__hbg-lines,
+.skate-navbar__hbg-close {
+    position: absolute;
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.skate-navbar__hbg-close {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.8);
+}
+
+.skate-navbar__hamburger[aria-expanded="true"] {
+    .skate-navbar__hbg-lines { opacity: 0; transform: rotate(45deg) scale(0.8); }
+    .skate-navbar__hbg-close { opacity: 1; transform: rotate(0deg) scale(1); }
 }
 
 // ── Links ─────────────────────────────────────────────────────
@@ -1283,10 +1308,10 @@ a.skate-navbar__mobile-link-header {
 }
 
 // Scroll lock
-body.skate-menu-open {
+body.skate-menu-open,
+html:has(body.skate-menu-open) {
     overflow: hidden;
-    position: fixed;
-    width: 100%;
+    scrollbar-gutter: stable;
 }
 
 // ── Fullscreen menu mode ──────────────────────────────────────────────
@@ -1295,7 +1320,15 @@ body.skate-menu-open {
     .skate-navbar__links,
     .skate-navbar__buttons { display: none !important; }
 
-    .skate-navbar__hamburger { display: inline-flex !important; }
+    // Hamburger becomes the close trigger — keep it above the fullscreen overlay
+    .skate-navbar__hamburger {
+        display: inline-flex !important;
+        position: relative;
+        z-index: 9999;
+    }
+
+    // Hide the dedicated close button — hamburger handles it
+    .skate-navbar__fullscreen-close { display: none !important; }
 }
 
 .skate-navbar__fullscreen {
@@ -1341,6 +1374,11 @@ body.skate-menu-open {
     }
 }
 
+@keyframes skate-fs-item-in {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 .skate-navbar__fullscreen-nav {
     display: flex;
     flex-direction: column;
@@ -1360,18 +1398,31 @@ body.skate-menu-open {
     text-decoration: none;
     letter-spacing: -0.03em;
     line-height: 1.1;
-    transition: opacity 0.25s, transform 0.25s;
+    transition: color 0.2s, transform 0.25s;
 
-    &:hover { transform: scale(1.04); }
-}
-
-.skate-navbar__fullscreen-nav:has(.skate-navbar__fullscreen-link:hover) .skate-navbar__fullscreen-link:not(:hover) {
-    opacity: 0.2;
+    &:hover {
+        color: var(--wp--preset--color--secondary-color);
+        transform: scale(1.04);
+    }
 }
 
 .skate-navbar__fullscreen-btn {
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
     margin-top: clamp(0.5rem, 1.5vw, 1rem);
+}
+
+// Staggered entry animation for fullscreen nav items
+.skate-navbar__fullscreen-nav > * {
+    opacity: 0; // hidden by default, animated in when menu opens
+}
+
+.skate-navbar__fullscreen.is-open .skate-navbar__fullscreen-nav > * {
+    animation: skate-fs-item-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@for $i from 1 through 10 {
+    .skate-navbar__fullscreen.is-open .skate-navbar__fullscreen-nav > *:nth-child(#{$i}) {
+        animation-delay: #{0.08 + ($i - 1) * 0.07}s;
+    }
 }
 
 // ── Variants ──────────────────────────────────────────────────

@@ -106,7 +106,8 @@ add_action( 'after_switch_theme', function () {
 add_shortcode( 'skate_navbar', 'skate_render_navbar' );
 
 function skate_render_navbar(): string {
-	$variant           = get_option( 'skate_navbar_variant', 'standard' );
+	$navbar_type       = get_option( 'skate_navbar_type', 'standard' );
+	$variant           = get_option( 'skate_navbar_variant', 'normal' );
 	$logo_size         = (int) get_option( 'skate_navbar_logo_size', 118 );
 	$logo_size_mobile  = (int) get_option( 'skate_navbar_logo_size_mobile', 80 );
 	$logo_light_url    = get_option( 'skate_navbar_logo_light', '' );
@@ -162,7 +163,7 @@ function skate_render_navbar(): string {
 	ob_start();
 	echo $col_bg_css; // phpcs:ignore WordPress.Security.EscapeOutput
 	?>
-	<header class="skate-navbar skate-navbar--<?= esc_attr( $variant ) ?><?= $fullscreen_menu ? ' skate-navbar--fullscreen-mode' : '' ?>" id="skate-navbar">
+	<header class="skate-navbar skate-navbar--type-<?= esc_attr( $navbar_type ) ?> skate-navbar--<?= esc_attr( $variant ) ?><?= $fullscreen_menu ? ' skate-navbar--fullscreen-mode' : '' ?>" id="skate-navbar">
 		<div class="skate-navbar__overlay" aria-hidden="true"></div>
 		<div class="skate-navbar__inner">
 
@@ -258,7 +259,12 @@ function skate_render_navbar(): string {
 			</div>
 			<?php endif; ?>
 			<!-- Mobile hamburger trigger -->
-			<button class="skate-navbar__hamburger" aria-expanded="false" aria-controls="skate-mobile-menu" aria-label="Open menu"><span class="skate-navbar__icon-svg" aria-hidden="true"><?= SKATE_HBG_LINES_SVG ?></span></button>
+			<button class="skate-navbar__hamburger" aria-expanded="false" aria-controls="skate-mobile-menu" aria-label="Open menu">
+				<span class="skate-navbar__hbg-icon" aria-hidden="true">
+					<svg class="skate-navbar__hbg-lines" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" fill="currentColor"><rect y="0"  width="22" height="2" rx="1"/><rect y="7"  width="22" height="2" rx="1"/><rect y="14" width="22" height="2" rx="1"/></svg>
+					<svg class="skate-navbar__hbg-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="2" x2="20" y2="20"/><line x1="20" y1="2" x2="2" y2="20"/></svg>
+				</span>
+			</button>
 		</div><!-- /.skate-navbar__right -->
 
 		</div><!-- /.skate-navbar__inner -->
@@ -287,7 +293,7 @@ function skate_render_navbar(): string {
 				<?php endforeach; ?>
 				<?php foreach ( $buttons as $btn ) :
 					$btn_url = skate_resolve_url( (int) ( $btn['page_id'] ?? 0 ), $btn['url'] ?? '' ); ?>
-				<a href="<?= esc_url( $btn_url ) ?>" class="skate-navbar__fullscreen-btn skate-navbar__btn--<?= esc_attr( $btn['style'] ?? 'filled' ) ?>"><?= esc_html( $btn['label'] ?? '' ) ?></a>
+				<a href="<?= esc_url( $btn_url ) ?>" class="skate-navbar__fullscreen-btn skate-navbar__btn skate-navbar__btn--<?= esc_attr( $btn['style'] ?? 'filled' ) ?>"><?= esc_html( $btn['label'] ?? '' ) ?></a>
 				<?php endforeach; ?>
 			</nav>
 		</div>
@@ -387,11 +393,25 @@ function skate_render_navbar(): string {
 }
 
 // ----------------------------------------
+// Migrate old variant values (pre-type system)
+// 'standard' variant → type=standard, variant=normal
+// ----------------------------------------
+add_action( 'init', function () {
+	$v = get_option( 'skate_navbar_variant', '' );
+	if ( $v === 'standard' || $v === 'compact' || $v === 'centered' ) {
+		update_option( 'skate_navbar_variant', 'normal' );
+	}
+} );
+
+// ----------------------------------------
 // Body class for navbar variant
 // ----------------------------------------
 add_filter( 'body_class', function ( $classes ) {
-	$v = get_option( 'skate_navbar_variant', 'standard' );
-	if ( $v && $v !== 'standard' ) {
+	$t = get_option( 'skate_navbar_type', 'standard' );
+	$classes[] = 'skate-navbar--type-' . sanitize_html_class( $t );
+
+	$v = get_option( 'skate_navbar_variant', 'normal' );
+	if ( $v && $v !== 'normal' ) {
 		$classes[] = 'skate-navbar--' . sanitize_html_class( $v );
 	}
 	if ( get_option( 'skate_navbar_link_text', 'inherit' ) === 'uppercase' ) {
@@ -431,7 +451,8 @@ add_action( 'wp_head', function () {
 // CSS injection for transparent variant (late, wins over any inline styles)
 // ----------------------------------------
 add_action( 'wp_head', function () {
-	$v          = get_option( 'skate_navbar_variant', 'standard' );
+	$v          = get_option( 'skate_navbar_variant', 'normal' );
+	$t          = get_option( 'skate_navbar_type', 'standard' );
 	$logo_light = get_option( 'skate_navbar_logo_light', '' );
 
 	// Dark variant: switch to light logo
@@ -441,11 +462,44 @@ add_action( 'wp_head', function () {
 		echo 'body.skate-navbar--dark .skate-navbar .skate-navbar__logo-light{display:inline-block!important;}';
 		echo '</style>';
 	}
+
+	// Tech type CSS injection
+	// backdrop-filter is on ::before to avoid creating a stacking context on the navbar itself
+	// (stacking context would trap the fullscreen overlay inside the navbar's z-index scope)
+	if ( $t === 'tech' ) {
+		$sel = 'body.skate-navbar--type-tech';
+		echo '<style id="skate-navbar-tech">';
+		// Base navbar: no background/backdrop-filter here — those go on ::before
+		echo $sel . ' .skate-navbar,'
+			. $sel . ' .skate-navbar.skate-navbar--scrolled{'
+			. 'background:transparent!important;'
+			. 'box-shadow:none!important;}';
+		// ::before carries the visual background so backdrop-filter doesn't create a stacking context on the navbar
+		echo $sel . ' .skate-navbar::before{'
+			. 'content:"";position:absolute;inset:0;z-index:-1;'
+			. 'background:rgba(10,10,10,.55);'
+			. 'backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);'
+			. 'border-bottom:1px solid rgba(255,255,255,.10);}';
+		echo $sel . ' .skate-navbar__inner{height:64px!important;}';
+		// Links: muted white, never flip to dark (scoped away from fullscreen and buttons)
+		echo $sel . ' .skate-navbar__inner .skate-navbar__link,'
+			. $sel . ' .skate-navbar__hamburger{'
+			. 'color:rgba(255,255,255,.45)!important;}';
+		echo $sel . ' .skate-navbar__inner .skate-navbar__link:hover,'
+			. $sel . ' .skate-navbar__hamburger:hover{'
+			. 'color:rgba(255,255,255,.9)!important;background:rgba(255,255,255,.06)!important;}';
+		// Chevron: always white-muted
+		echo $sel . ' .skate-navbar__link-item[data-submenu]>.skate-navbar__link::after{'
+			. 'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 10 6\' fill=\'none\' stroke=\'rgba(255%2C255%2C255%2C.45)\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'1%2C1 5%2C5 9%2C1\'/%3E%3C/svg%3E")!important;}';
+		// Logo: never touched
+		echo '</style>';
+	}
 }, 999 );
 
 add_action( 'wp_head', function () {
-	$v = get_option( 'skate_navbar_variant', 'standard' );
-	if ( $v !== 'transparent' ) return;
+	$v = get_option( 'skate_navbar_variant', 'normal' );
+	$t = get_option( 'skate_navbar_type', 'standard' );
+	if ( $v !== 'transparent' || $t === 'tech' ) return;
 	$logo_light = get_option( 'skate_navbar_logo_light', '' );
 	echo '<style id="skate-navbar-transparent">';
 	// Base transparent state
@@ -478,11 +532,12 @@ add_action( 'wp_head', function () {
 // --skate-navbar-offset: used by templates to push content below the fixed navbar.
 // Transparent variant = 0 (content intentionally starts behind the navbar).
 add_action( 'wp_head', function () {
-	$variant        = get_option( 'skate_navbar_variant', 'standard' );
-	$desktop_offset = match ( $variant ) {
-		'transparent' => '0px',
-		'compact'     => '72px',
-		default       => '96px',
+	$variant        = get_option( 'skate_navbar_variant', 'normal' );
+	$navbar_type    = get_option( 'skate_navbar_type', 'standard' );
+	$desktop_offset = match ( true ) {
+		$variant === 'transparent'  => '0px',
+		$navbar_type === 'tech'     => '64px',
+		default                     => '96px',
 	};
 	$mobile_offset  = $variant === 'transparent' ? '0px' : '60px';
 	echo '<style id="skate-navbar-offset">';
@@ -636,8 +691,13 @@ function skate_render_navbar_admin(): void {
 		isset( $_POST['skate_navbar_nonce'] ) &&
 		wp_verify_nonce( $_POST['skate_navbar_nonce'], 'skate_save_navbar' )
 	) {
-		// Variant
-		update_option( 'skate_navbar_variant', sanitize_key( $_POST['skate_navbar_variant'] ?? 'standard' ) );
+		// Type + Variant
+		$allowed_types    = [ 'standard', 'tech' ];
+		$allowed_variants = [ 'normal', 'transparent', 'dark' ];
+		$saved_type    = sanitize_key( $_POST['skate_navbar_type']    ?? 'standard' );
+		$saved_variant = sanitize_key( $_POST['skate_navbar_variant'] ?? 'normal' );
+		update_option( 'skate_navbar_type',    in_array( $saved_type,    $allowed_types,    true ) ? $saved_type    : 'standard' );
+		update_option( 'skate_navbar_variant', in_array( $saved_variant, $allowed_variants, true ) ? $saved_variant : 'normal' );
 
 		// Logo settings
 		update_option( 'skate_navbar_logo_size',        absint( $_POST['skate_navbar_logo_size']        ?? 118 ) );
@@ -758,7 +818,8 @@ function skate_render_navbar_admin(): void {
 	}
 
 	// ---- Current values ----
-	$variant          = get_option( 'skate_navbar_variant', 'standard' );
+	$navbar_type      = get_option( 'skate_navbar_type', 'standard' );
+	$variant          = get_option( 'skate_navbar_variant', 'normal' );
 	$logo_size        = (int) get_option( 'skate_navbar_logo_size', 118 );
 	$logo_size_mobile = (int) get_option( 'skate_navbar_logo_size_mobile', 80 );
 	$logo_light_url   = get_option( 'skate_navbar_logo_light', '' );
@@ -852,21 +913,57 @@ function skate_render_navbar_admin(): void {
 			<div class="skate-submenus-layout">
 			<div class="skate-submenus-main">
 
-				<!-- SECTION: Variant -->
+				<!-- SECTION: Type + Variant -->
 				<div class="skate-tune-section">
 					<div class="skate-tune-head">
 						<h2 class="skate-tune-title">Style</h2>
 					</div>
+
+					<!-- Type selector -->
 					<div class="skate-tune-row" style="align-items:flex-start;padding-top:16px;">
+						<label class="skate-tune-label" style="padding-top:12px;">Type</label>
+						<div class="skate-tune-control">
+							<div class="skate-variant-cards" id="skate-navbar-type-cards">
+								<?php
+								$types = [
+									'standard' => 'Standard',
+									'tech'     => 'Tech',
+								];
+								foreach ( $types as $tval => $tlbl ) : ?>
+								<label class="skate-variant-card<?= $navbar_type === $tval ? ' is-active' : '' ?>">
+									<input type="radio" name="skate_navbar_type" value="<?= esc_attr( $tval ) ?>"<?= checked( $navbar_type, $tval, false ) ?> hidden>
+									<span class="skate-variant-preview skate-variant-preview--type-<?= esc_attr( $tval ) ?>">
+										<span class="pvp-bar">
+											<span class="pvp-logo"></span>
+											<span class="pvp-links">
+												<span class="pvp-link"></span>
+												<span class="pvp-link"></span>
+												<span class="pvp-link"></span>
+											</span>
+											<span class="pvp-btn"></span>
+										</span>
+										<span class="pvp-content">
+											<span class="pvp-line"></span>
+											<span class="pvp-line pvp-line--short"></span>
+											<span class="pvp-line"></span>
+										</span>
+									</span>
+									<span class="skate-variant-name"><?= esc_html( $tlbl ) ?></span>
+								</label>
+								<?php endforeach; ?>
+							</div>
+						</div>
+					</div>
+
+					<!-- Variant selector (only for standard) -->
+					<div class="skate-tune-row" id="skate-navbar-variant-row" style="align-items:flex-start;<?= $navbar_type !== 'standard' ? 'display:none;' : '' ?>">
 						<label class="skate-tune-label" style="padding-top:12px;">Variant</label>
 						<div class="skate-tune-control">
 							<div class="skate-variant-cards">
 								<?php
 								$variants = [
-									'standard'    => 'Standard',
-									'centered'    => 'Centered',
+									'normal'      => 'Normal',
 									'transparent' => 'Transparent',
-									'compact'     => 'Kompakt',
 									'dark'        => 'Dark',
 								];
 								foreach ( $variants as $val => $lbl ) : ?>
@@ -1563,26 +1660,25 @@ function skate_render_navbar_admin(): void {
 	.pvp-content { flex: 1; padding: 5px 5px; display: flex; flex-direction: column; gap: 3px; justify-content: center; }
 	.pvp-line  { height: 3px; background: rgba(0,0,0,.1); border-radius: 1px; }
 	.pvp-line--short { width: 55%; }
-	/* Standard */
-	.skate-variant-preview--standard .pvp-bar { background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
-	/* Transparent */
+	/* Type: Standard */
+	.skate-variant-preview--type-standard .pvp-bar { background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
+	/* Type: Tech */
+	.skate-variant-preview--type-tech { background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 100%); }
+	.skate-variant-preview--type-tech .pvp-bar { background: rgba(255,255,255,.08); backdrop-filter: blur(4px); border-bottom: 1px solid rgba(255,255,255,.12); height: 11px; }
+	.skate-variant-preview--type-tech .pvp-logo { background: #e55a2b; }
+	.skate-variant-preview--type-tech .pvp-link { background: #fff; opacity: .55; }
+	.skate-variant-preview--type-tech .pvp-btn  { background: #e55a2b; }
+	.skate-variant-preview--type-tech .pvp-line { background: rgba(255,255,255,.12); }
+	/* Variant: Normal */
+	.skate-variant-preview--normal .pvp-bar { background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
+	/* Variant: Transparent */
 	.skate-variant-preview--transparent { background: linear-gradient(140deg, #17263a 0%, #2e5073 100%); }
 	.skate-variant-preview--transparent .pvp-bar { background: transparent; }
 	.skate-variant-preview--transparent .pvp-logo { background: #fff; }
 	.skate-variant-preview--transparent .pvp-link { background: #fff; opacity: .55; }
 	.skate-variant-preview--transparent .pvp-btn  { background: #d6b36d; }
 	.skate-variant-preview--transparent .pvp-line { background: rgba(255,255,255,.18); }
-	/* Compact */
-	.skate-variant-preview--compact .pvp-bar { background: #fff; height: 9px; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
-	.skate-variant-preview--compact .pvp-logo { height: 4px; }
-	.skate-variant-preview--compact .pvp-btn  { height: 4px; }
-	.skate-variant-preview--compact .pvp-link { height: 2px; }
-	/* Centered */
-	.skate-variant-preview--centered .pvp-bar { background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.08); justify-content: space-between; }
-	.skate-variant-preview--centered .pvp-bar .pvp-links { flex: 0 0 auto; }
-	.skate-variant-preview--centered .pvp-bar .pvp-logo  { position: absolute; left: 50%; transform: translateX(-50%); }
-	.skate-variant-preview--centered .pvp-bar { position: relative; }
-	/* Dark */
+	/* Variant: Dark */
 	.skate-variant-preview--dark .pvp-bar { background: #17263a; }
 	.skate-variant-preview--dark .pvp-logo { background: #fff; }
 	.skate-variant-preview--dark .pvp-link { background: #fff; opacity: .45; }
@@ -1997,6 +2093,17 @@ function skate_render_navbar_admin(): void {
 				radio.closest('.skate-variant-card').classList.add('is-active');
 			});
 		});
+
+		// Show/hide variant row based on selected type
+		var typeCards   = document.getElementById('skate-navbar-type-cards');
+		var variantRow  = document.getElementById('skate-navbar-variant-row');
+		if (typeCards && variantRow) {
+			typeCards.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+				radio.addEventListener('change', function () {
+					variantRow.style.display = radio.value === 'standard' ? '' : 'none';
+				});
+			});
+		}
 
 		// Update all submenu parent indices before form submit (both tabs)
 		document.getElementById('skate-navbar-form').addEventListener('submit', function () {
