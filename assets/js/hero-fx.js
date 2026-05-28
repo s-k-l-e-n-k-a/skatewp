@@ -388,10 +388,17 @@
 				imgW = source.videoEl.videoWidth  || 1920;
 				imgH = source.videoEl.videoHeight || 1080;
 				activate();
-				rafId = window.requestAnimationFrame(render);
+				if (!rafId) rafId = window.requestAnimationFrame(render);
 			}
 			if (source.videoEl.readyState >= 1) start();
 			else source.videoEl.addEventListener('loadedmetadata', start, { once: true });
+
+			// Mobile: autoplay is often delayed until the browser is ready.
+			// Re-kick the render loop whenever the video actually starts playing
+			// so the canvas isn't left blank if the loop stopped while paused.
+			source.videoEl.addEventListener('play', function () {
+				if (!rafId) rafId = window.requestAnimationFrame(render);
+			}, { passive: true });
 		}
 
 		function resize() {
