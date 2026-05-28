@@ -86,6 +86,30 @@ function skate_is_cursor_enabled(): bool {
 	return skate_get_cursor_style() !== 'off';
 }
 
+// Scroll Reveal defaults
+define( 'SKATE_DEFAULT_SCROLL_REVEAL_PRESET',   'fade-up' );
+define( 'SKATE_DEFAULT_SCROLL_REVEAL_DURATION', 600 );
+define( 'SKATE_DEFAULT_SCROLL_REVEAL_DELAY',    0 );
+
+function skate_is_scroll_reveal_enabled(): bool {
+	return get_option( 'skate_scroll_reveal_enabled', '' ) === '1';
+}
+function skate_get_scroll_reveal_preset(): string {
+	$v = get_option( 'skate_scroll_reveal_preset', '' );
+	return in_array( $v, [ 'fade-up', 'fade-in', 'slide-in' ], true ) ? $v : SKATE_DEFAULT_SCROLL_REVEAL_PRESET;
+}
+function skate_get_scroll_reveal_duration(): int {
+	$v = (int) get_option( 'skate_scroll_reveal_duration', '' );
+	return ( $v >= 200 && $v <= 1200 ) ? $v : SKATE_DEFAULT_SCROLL_REVEAL_DURATION;
+}
+function skate_get_scroll_reveal_delay(): int {
+	$v = (int) get_option( 'skate_scroll_reveal_delay', '' );
+	return ( $v >= 0 && $v <= 500 ) ? $v : SKATE_DEFAULT_SCROLL_REVEAL_DELAY;
+}
+function skate_is_scroll_reveal_repeat(): bool {
+	return get_option( 'skate_scroll_reveal_repeat', '' ) === '1';
+}
+
 // Hero FX defaults
 define( 'SKATE_DEFAULT_HERO_FX_MODE',      'distortion' );
 define( 'SKATE_DEFAULT_HERO_FX_INTENSITY', 50 );
@@ -1271,6 +1295,33 @@ add_action( 'admin_init', function () {
 		$cursor_style = sanitize_key( $_POST['skate_cursor_style'] ?? '' );
 		if ( in_array( $cursor_style, [ 'off', 'circle', 'dot-ring' ], true ) ) {
 			update_option( 'skate_cursor_style', $cursor_style );
+		}
+
+		if ( ( $_POST['skate_scroll_reveal_enabled'] ?? '' ) === '1' ) {
+			update_option( 'skate_scroll_reveal_enabled', '1' );
+		} else {
+			delete_option( 'skate_scroll_reveal_enabled' );
+		}
+
+		$sr_preset = sanitize_key( $_POST['skate_scroll_reveal_preset'] ?? '' );
+		if ( in_array( $sr_preset, [ 'fade-up', 'fade-in', 'slide-in' ], true ) ) {
+			update_option( 'skate_scroll_reveal_preset', $sr_preset );
+		}
+
+		$sr_duration = max( 200, min( 1200, (int) ( $_POST['skate_scroll_reveal_duration'] ?? SKATE_DEFAULT_SCROLL_REVEAL_DURATION ) ) );
+		( $sr_duration !== SKATE_DEFAULT_SCROLL_REVEAL_DURATION )
+			? update_option( 'skate_scroll_reveal_duration', $sr_duration )
+			: delete_option( 'skate_scroll_reveal_duration' );
+
+		$sr_delay = max( 0, min( 500, (int) ( $_POST['skate_scroll_reveal_delay'] ?? SKATE_DEFAULT_SCROLL_REVEAL_DELAY ) ) );
+		( $sr_delay !== SKATE_DEFAULT_SCROLL_REVEAL_DELAY )
+			? update_option( 'skate_scroll_reveal_delay', $sr_delay )
+			: delete_option( 'skate_scroll_reveal_delay' );
+
+		if ( ( $_POST['skate_scroll_reveal_repeat'] ?? '' ) === '1' ) {
+			update_option( 'skate_scroll_reveal_repeat', '1' );
+		} else {
+			delete_option( 'skate_scroll_reveal_repeat' );
 		}
 
 		wp_safe_redirect( $redirect ); exit;
@@ -3212,7 +3263,12 @@ function skate_render_effects_page(): void {
 	$hero_fx_enabled      = skate_is_hero_fx_enabled();
 	$hero_fx_intensity    = skate_get_hero_fx_intensity();
 	$hero_fx_radius       = skate_get_hero_fx_radius();
-	$cursor_style      = skate_get_cursor_style();
+	$cursor_style         = skate_get_cursor_style();
+	$sr_enabled           = skate_is_scroll_reveal_enabled();
+	$sr_preset            = skate_get_scroll_reveal_preset();
+	$sr_duration          = skate_get_scroll_reveal_duration();
+	$sr_delay             = skate_get_scroll_reveal_delay();
+	$sr_repeat            = skate_is_scroll_reveal_repeat();
 
 	skate_print_preset_assets();
 	?>
@@ -3388,6 +3444,69 @@ function skate_render_effects_page(): void {
 				</p>
 			</div><!-- /.skate-tune-section -->
 
+			<div class="skate-tune-section" style="margin-top:16px">
+				<div class="skate-tune-head">
+					<h3 class="skate-tune-title">Scroll Reveal</h3>
+					<p class="skate-tune-desc">Fade content blocks in as the user scrolls.</p>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-scroll-reveal-enabled">Enable</label>
+					<div class="skate-tune-control">
+						<input type="hidden" name="skate_scroll_reveal_enabled" value="0">
+						<label class="skate-secondary-toggle-label" for="skate-scroll-reveal-enabled">
+							<input type="checkbox" id="skate-scroll-reveal-enabled" name="skate_scroll_reveal_enabled" value="1"<?= checked( $sr_enabled, true, false ) ?>>
+							<span class="skate-toggle-track"><span class="skate-toggle-thumb"></span></span>
+						</label>
+					</div>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-scroll-reveal-preset">Animation</label>
+					<div class="skate-tune-control">
+						<select id="skate-scroll-reveal-preset" name="skate_scroll_reveal_preset" style="max-width:180px">
+							<option value="fade-up"<?= selected( $sr_preset, 'fade-up', false ) ?>>Fade Up</option>
+							<option value="fade-in"<?= selected( $sr_preset, 'fade-in', false ) ?>>Fade In</option>
+							<option value="slide-in"<?= selected( $sr_preset, 'slide-in', false ) ?>>Slide In</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-scroll-reveal-duration">Duration</label>
+					<div class="skate-tune-control">
+						<input type="range" id="skate-scroll-reveal-duration" name="skate_scroll_reveal_duration"
+							min="200" max="1200" step="50" value="<?= esc_attr( $sr_duration ) ?>"
+							class="skate-effects-range">
+						<output class="skate-effects-output" id="skate-scroll-reveal-duration-out"><?= esc_html( $sr_duration ) ?>ms</output>
+					</div>
+					<span class="skate-tune-hint">200 snappy — 1200 slow</span>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-scroll-reveal-delay">Delay</label>
+					<div class="skate-tune-control">
+						<input type="range" id="skate-scroll-reveal-delay" name="skate_scroll_reveal_delay"
+							min="0" max="500" step="50" value="<?= esc_attr( $sr_delay ) ?>"
+							class="skate-effects-range">
+						<output class="skate-effects-output" id="skate-scroll-reveal-delay-out"><?= esc_html( $sr_delay ) ?>ms</output>
+					</div>
+					<span class="skate-tune-hint">Extra wait before the animation starts</span>
+				</div>
+
+				<div class="skate-tune-row">
+					<label class="skate-tune-label" for="skate-scroll-reveal-repeat">Repeat</label>
+					<div class="skate-tune-control">
+						<input type="hidden" name="skate_scroll_reveal_repeat" value="0">
+						<label class="skate-secondary-toggle-label" for="skate-scroll-reveal-repeat">
+							<input type="checkbox" id="skate-scroll-reveal-repeat" name="skate_scroll_reveal_repeat" value="1"<?= checked( $sr_repeat, true, false ) ?>>
+							<span class="skate-toggle-track"><span class="skate-toggle-thumb"></span></span>
+						</label>
+					</div>
+					<span class="skate-tune-hint">Re-animate every time the section enters the viewport</span>
+				</div>
+			</div><!-- /.skate-tune-section scroll-reveal -->
+
 			<div class="skate-effects-actions">
 				<input type="submit" class="button-primary" value="<?= esc_attr__( 'Save Effects', 'skate' ) ?>">
 			</div>
@@ -3441,6 +3560,16 @@ function skate_render_effects_page(): void {
 		var fxRadOut   = document.getElementById('skate-hero-fx-radius-out');
 		if (fxRadRange && fxRadOut) {
 			fxRadRange.addEventListener('input', function () { fxRadOut.textContent = fxRadRange.value; });
+		}
+		var srDurRange = document.getElementById('skate-scroll-reveal-duration');
+		var srDurOut   = document.getElementById('skate-scroll-reveal-duration-out');
+		if (srDurRange && srDurOut) {
+			srDurRange.addEventListener('input', function () { srDurOut.textContent = srDurRange.value + 'ms'; });
+		}
+		var srDelRange = document.getElementById('skate-scroll-reveal-delay');
+		var srDelOut   = document.getElementById('skate-scroll-reveal-delay-out');
+		if (srDelRange && srDelOut) {
+			srDelRange.addEventListener('input', function () { srDelOut.textContent = srDelRange.value + 'ms'; });
 		}
 		document.querySelectorAll('.skate-effects-class-pill').forEach(function (el) {
 			el.addEventListener('click', function () {

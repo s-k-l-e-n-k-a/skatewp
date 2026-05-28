@@ -59,6 +59,25 @@ function skate_enqueue_assets(): void
         'hero-breathe'  => '/assets/js/hero-breathe.js',
     ];
 
+    // Scroll reveal — enqueue only when enabled; config printed inline before the script
+    if ( function_exists( 'skate_is_scroll_reveal_enabled' ) && skate_is_scroll_reveal_enabled() ) {
+        $sr_path = $theme_dir . '/assets/js/scroll-reveal.js';
+        if ( file_exists( $sr_path ) ) {
+            add_action( 'wp_head', function () {
+                echo '<script id="skate-scroll-reveal-config">window.skateScrollReveal='
+                    . wp_json_encode( [
+                        'enabled'  => true,
+                        'preset'   => skate_get_scroll_reveal_preset(),
+                        'duration' => skate_get_scroll_reveal_duration(),
+                        'delay'    => skate_get_scroll_reveal_delay(),
+                        'repeat'   => skate_is_scroll_reveal_repeat(),
+                    ] )
+                    . ';</script>' . "\n";
+            } );
+            wp_enqueue_script( 'skate-scroll-reveal', $theme_uri . '/assets/js/scroll-reveal.js', [], filemtime( $sr_path ), true );
+        }
+    }
+
     foreach ($scripts as $handle => $relative_path) {
         $file_path = $theme_dir . $relative_path;
         if (file_exists($file_path)) {
